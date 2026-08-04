@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 Fully Responsive Intelligent Digital Assistant for You
 
 File:
-    runtime/echo/recognizer.py
+    runtime/speech/recognizer.py
 
 Purpose:
     High-level speech recognizer.
@@ -13,9 +13,9 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Version:
-    0.4.0
+    0.4.1
 Release:
-    Echo
+    Ears
 ==========================================================
 """
 
@@ -27,7 +27,7 @@ from .provider import SpeechProvider
 
 class SpeechRecognizer:
     """
-    Wraps a speech provider.
+    Coordinates speech recognition.
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class SpeechRecognizer:
 
     def listen(self) -> SpeechResult:
         """
-        Listen for speech.
+        Recognize speech.
         """
 
         return self._provider.recognize()

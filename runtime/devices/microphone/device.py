@@ -4,18 +4,18 @@ F.R.I.D.A.Y.
 Fully Responsive Intelligent Digital Assistant for You
 
 File:
-    runtime/echo/provider.py
+    runtime/devices/microphone/device.py
 
 Purpose:
-    Defines the speech provider interface.
+    Defines the microphone device interface.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
 Version:
-    0.4.0
+    0.4.1
 Release:
-    Echo
+    Ears
 ==========================================================
 """
 
@@ -23,17 +23,18 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from .models import SpeechResult
 
-
-class SpeechProvider(ABC):
+class MicrophoneDevice(ABC):
     """
-    Base class for speech recognition providers.
+    Base interface for all microphone devices.
     """
 
     @abstractmethod
-    def recognize(self) -> SpeechResult:
+    def listen(self) -> bytes:
         """
-        Recognize speech.
+        Capture raw audio from the microphone.
+
+        Returns:
+            Raw PCM audio bytes.
         """
         raise NotImplementedError
