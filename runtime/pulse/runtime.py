@@ -22,8 +22,7 @@ Release:
 from __future__ import annotations
 
 from runtime.core import CoreServices
-from runtime.doctor import Doctor
-from runtime.doctor.collectors import RuntimeCollector
+from runtime.loader import ServiceLoader
 from runtime.registry import Service, ServiceRegistry
 
 from .state import RuntimeState
@@ -38,6 +37,7 @@ class Runtime:
     def __init__(self) -> None:
         self.core = CoreServices.create()
         self.registry = ServiceRegistry()
+        self.loader = ServiceLoader()
         self.state = RuntimeState.STOPPED
 
     def initialize(self) -> None:
@@ -55,6 +55,15 @@ class Runtime:
         self.core.console.success("Core Services ready.")
         self.core.console.success("Service registry ready.")
 
+        self.core.console.info("Loading services...")
+
+        for service in self.loader.load():
+            self.register_service(service)
+
+        self.core.console.success(
+            f"{self.registry.count()} service(s) loaded."
+        )
+
     def register_service(self, service: Service) -> None:
         """
         Register a service with the runtime.
@@ -66,43 +75,12 @@ class Runtime:
             f"Registered: {service.name}"
         )
 
-    def _run_startup_diagnostics(self) -> None:
-        """
-        Execute Doctor startup diagnostics.
-        """
-
-        self.core.console.info("Running Doctor...")
-
-        doctor = Doctor()
-
-        doctor.register(
-            RuntimeCollector(self.state)
-        )
-
-        reports = doctor.run()
-
-        for report in reports:
-
-            if report.healthy:
-
-                self.core.console.success(
-                    f"{report.subsystem:<15} {report.status}"
-                )
-
-            else:
-
-                self.core.console.warning(
-                    f"{report.subsystem:<15} {report.status}"
-                )
-
     def start(self) -> None:
         """
         Start every registered service.
         """
 
         self.state = RuntimeState.RUNNING
-
-        self._run_startup_diagnostics()
 
         self.core.console.info("Starting services...")
 
