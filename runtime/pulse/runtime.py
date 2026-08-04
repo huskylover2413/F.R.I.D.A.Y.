@@ -13,15 +13,17 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Version:
-    0.2.0
+    0.3.0
 Release:
-    Foundation Release 2
+    Awakening
 ==========================================================
 """
 
 from __future__ import annotations
 
 from runtime.core import CoreServices
+from runtime.doctor import Doctor
+from runtime.doctor.collectors import RuntimeCollector
 from runtime.registry import Service, ServiceRegistry
 
 from .state import RuntimeState
@@ -34,14 +36,8 @@ class Runtime:
     """
 
     def __init__(self) -> None:
-        """
-        Construct the runtime and its shared infrastructure.
-        """
-
         self.core = CoreServices.create()
-
         self.registry = ServiceRegistry()
-
         self.state = RuntimeState.STOPPED
 
     def initialize(self) -> None:
@@ -70,14 +66,48 @@ class Runtime:
             f"Registered: {service.name}"
         )
 
+    def _run_startup_diagnostics(self) -> None:
+        """
+        Execute Doctor startup diagnostics.
+        """
+
+        self.core.console.info("Running Doctor...")
+
+        doctor = Doctor()
+
+        doctor.register(
+            RuntimeCollector(self.state)
+        )
+
+        reports = doctor.run()
+
+        for report in reports:
+
+            if report.healthy:
+
+                self.core.console.success(
+                    f"{report.subsystem:<15} {report.status}"
+                )
+
+            else:
+
+                self.core.console.warning(
+                    f"{report.subsystem:<15} {report.status}"
+                )
+
     def start(self) -> None:
         """
         Start every registered service.
         """
 
+        self.state = RuntimeState.RUNNING
+
+        self._run_startup_diagnostics()
+
         self.core.console.info("Starting services...")
 
         if self.registry.count() == 0:
+
             self.core.console.warning(
                 "No services have been registered."
             )
@@ -93,11 +123,13 @@ class Runtime:
                 service.start()
 
                 if service.healthy:
+
                     self.core.console.success(
                         f"{service.name} running."
                     )
 
                 else:
+
                     self.core.console.warning(
                         f"{service.name} started in degraded mode."
                     )
@@ -107,8 +139,6 @@ class Runtime:
                 self.core.console.error(
                     f"{service.name} failed to start: {exc}"
                 )
-
-        self.state = RuntimeState.RUNNING
 
         self.core.console.success(
             "Runtime startup complete."
@@ -125,7 +155,9 @@ class Runtime:
             "Stopping services..."
         )
 
-        for service in reversed(list(self.registry.all())):
+        for service in reversed(
+            list(self.registry.all())
+        ):
 
             self.core.console.info(
                 f"Stopping {service.name}..."
