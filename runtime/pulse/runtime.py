@@ -13,7 +13,7 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Version:
-    0.3.0
+    0.3.1
 Release:
     Awakening
 ==========================================================
@@ -30,14 +30,16 @@ from .state import RuntimeState
 
 class Runtime:
     """
-    Pulse is responsible for managing the lifecycle of
-    every FRIDAY service.
+    Pulse manages the lifecycle of every FRIDAY service.
     """
 
     def __init__(self) -> None:
         self.core = CoreServices.create()
         self.registry = ServiceRegistry()
-        self.loader = ServiceLoader()
+
+        # The loader owns service creation.
+        self.loader = ServiceLoader(self.registry)
+
         self.state = RuntimeState.STOPPED
 
     def initialize(self) -> None:
@@ -57,11 +59,10 @@ class Runtime:
 
         self.core.console.info("Loading services...")
 
-        for service in self.loader.load():
-            self.register_service(service)
+        loaded = self.loader.load()
 
         self.core.console.success(
-            f"{self.registry.count()} service(s) loaded."
+            f"{loaded} service(s) loaded."
         )
 
     def register_service(self, service: Service) -> None:
@@ -129,13 +130,9 @@ class Runtime:
 
         self.state = RuntimeState.STOPPING
 
-        self.core.console.info(
-            "Stopping services..."
-        )
+        self.core.console.info("Stopping services...")
 
-        for service in reversed(
-            list(self.registry.all())
-        ):
+        for service in reversed(list(self.registry.all())):
 
             self.core.console.info(
                 f"Stopping {service.name}..."
