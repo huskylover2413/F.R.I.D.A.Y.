@@ -7,7 +7,7 @@ File:
     runtime/session/session.py
 
 Purpose:
-    Owns an interactive user session with FRIDAY.
+    Owns one interactive FRIDAY session.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
@@ -19,39 +19,82 @@ Foundation Release:
 
 from __future__ import annotations
 
+from runtime.cognition import CognitionEngine
+
 
 class Session:
     """
-    Represents one interactive FRIDAY session.
+    Represents one interactive user session.
 
-    The Session owns user interaction.
+    A Session owns the conversation between the
+    user and FRIDAY.
 
-    It does NOT manage services.
+    It does NOT manage runtime services.
+    It does NOT manage application startup.
 
-    It does NOT manage runtime lifecycle.
-
-    It simply hosts a conversation between
-    the user and FRIDAY.
+    Its only responsibility is interaction.
     """
 
     def __init__(self) -> None:
-        self.running = False
+        self._running = False
+        self._cognition = CognitionEngine()
+
+    @property
+    def running(self) -> bool:
+        return self._running
 
     def initialize(self) -> None:
-        """Prepare the session."""
-        self.running = True
+        """
+        Prepare the session.
+        """
+        self._running = True
 
     def run(self) -> None:
         """
-        Execute the session.
-
-        (Interactive terminal arrives in the next step.)
+        Run the interactive session.
         """
+
         print()
-        print("FRIDAY Session initialized.")
-        print("Interactive console coming next...")
+        print("====================================================")
+        print("FRIDAY Interactive Session")
+        print("Type 'exit' to quit.")
+        print("====================================================")
         print()
+
+        while self._running:
+
+            try:
+
+                user_input = input("> ").strip()
+
+            except (EOFError, KeyboardInterrupt):
+
+                print()
+                break
+
+            if not user_input:
+                continue
+
+            if user_input.lower() in {
+                "exit",
+                "quit",
+            }:
+                break
+
+            response = self._cognition.process(user_input)
+
+            print()
+            print(response.message)
+            print()
+
+        self.shutdown()
 
     def shutdown(self) -> None:
-        """Shutdown the session."""
-        self.running = False
+        """
+        Shutdown the session.
+        """
+
+        self._running = False
+
+        print()
+        print("Goodbye.")

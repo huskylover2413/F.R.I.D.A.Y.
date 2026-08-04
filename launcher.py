@@ -12,39 +12,58 @@ Purpose:
 Author:
     Shae Simpson & OpenAI ChatGPT
 
-Version:
-    Alpha 0.4 - Foundation Release 2
+Foundation Release:
+    7
 ==========================================================
 """
 
 from __future__ import annotations
 
-import sys
-
 from runtime.pulse import Runtime
+from runtime.session import Session
 
 
 def main() -> int:
     """
     Launch the FRIDAY runtime.
-
-    Returns:
-        int: Process exit code.
     """
+
+    runtime = Runtime()
+
     try:
-        runtime = Runtime()
+        #
+        # Bring the operating environment online.
+        #
         runtime.initialize()
         runtime.start()
+
+        #
+        # Begin an interactive user session.
+        #
+        session = Session()
+        session.initialize()
+        session.run()
+
         return 0
 
     except KeyboardInterrupt:
-        print("\nShutdown requested by user.")
+
+        print("\nShutdown requested.")
+
         return 0
 
     except Exception as exc:
-        print("\nFRIDAY was unable to start.")
-        print(f"Reason: {exc}")
+
+        print("\nFRIDAY encountered a fatal startup error.")
+        print(f"\nReason: {exc}")
+
         return 1
+
+    finally:
+        #
+        # Runtime always shuts down cleanly.
+        #
+        runtime.shutdown()
 
 
 if __name__ == "__main__":
