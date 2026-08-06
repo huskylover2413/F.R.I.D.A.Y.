@@ -13,29 +13,22 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    10.1
+    11.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from runtime.cognition import CognitionEngine
-from runtime.input import KeyboardInput
+from runtime.platforms.apple.speech.provider import AppleSpeechProvider
 from runtime.profile import ProfileManager
+from runtime.speech.recognizer import SpeechRecognizer
 from runtime.voice import VoiceSynthesizer
 
 
 class Session:
     """
-    Represents one interactive user session.
-
-    A Session owns the conversation between the
-    user and FRIDAY.
-
-    It does NOT manage runtime services.
-    It does NOT manage application startup.
-
-    Its only responsibility is interaction.
+    Represents one interactive FRIDAY session.
     """
 
     def __init__(self) -> None:
@@ -48,14 +41,16 @@ class Session:
         self._cognition = CognitionEngine()
 
         #
-        # Active user profile
+        # User profile
         #
         self._profile = ProfileManager().load()
 
         #
-        # Input source
+        # Speech recognition
         #
-        self._input = KeyboardInput()
+        self._speech = SpeechRecognizer(
+            AppleSpeechProvider()
+        )
 
         #
         # Voice output
@@ -69,21 +64,14 @@ class Session:
         return self._running
 
     def initialize(self) -> None:
-        """
-        Prepare the session.
-        """
-
         self._running = True
 
     def run(self) -> None:
-        """
-        Run the interactive session.
-        """
 
         print()
         print("====================================================")
-        print("FRIDAY Interactive Session")
-        print("Type 'exit' to quit.")
+        print("FRIDAY Voice Session")
+        print("Say 'exit' to quit.")
         print("====================================================")
         print()
 
@@ -101,10 +89,15 @@ class Session:
 
             try:
 
-                #
-                # Read from the active input source.
-                #
-                user_input = self._input.read()
+                print()
+                print("Listening...")
+
+                speech = self._speech.listen()
+
+                user_input = speech.text.strip()
+
+                if user_input:
+                    print(f"You: {user_input}")
 
             except (EOFError, KeyboardInterrupt):
 
@@ -140,6 +133,14 @@ class Session:
         """
 
         self._running = False
+
+        #
+        # Shutdown speech subsystem if supported.
+        #
+        provider = getattr(self._speech, "_provider", None)
+
+        if provider is not None and hasattr(provider, "shutdown"):
+            provider.shutdown()
 
         print()
         print("Goodbye.")
