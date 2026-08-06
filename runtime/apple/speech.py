@@ -2,10 +2,13 @@
 ==========================================================
 F.R.I.D.A.Y.
 
-Apple Speech
+Apple Speech Utilities
 
 Author:
     Shae Simpson & OpenAI ChatGPT
+
+Foundation Release:
+    10.2
 ==========================================================
 """
 
@@ -26,7 +29,7 @@ class AppleSpeech:
         if not ApplePermissions.request_speech_authorization():
 
             raise PermissionError(
-                "Speech Recognition permission denied."
+                "Speech recognition permission denied."
             )
 
         recognizer = SFSpeechRecognizer.alloc().init()
@@ -34,7 +37,7 @@ class AppleSpeech:
         if recognizer is None:
 
             raise RuntimeError(
-                "Unable to create Speech Recognizer."
+                "Unable to create SFSpeechRecognizer."
             )
 
         self._recognizer = recognizer

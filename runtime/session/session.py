@@ -13,13 +13,16 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    7
+    10.1
 ==========================================================
 """
 
 from __future__ import annotations
 
 from runtime.cognition import CognitionEngine
+from runtime.input import KeyboardInput
+from runtime.profile import ProfileManager
+from runtime.voice import VoiceSynthesizer
 
 
 class Session:
@@ -36,8 +39,30 @@ class Session:
     """
 
     def __init__(self) -> None:
+
         self._running = False
+
+        #
+        # Core systems
+        #
         self._cognition = CognitionEngine()
+
+        #
+        # Active user profile
+        #
+        self._profile = ProfileManager().load()
+
+        #
+        # Input source
+        #
+        self._input = KeyboardInput()
+
+        #
+        # Voice output
+        #
+        self._voice = VoiceSynthesizer(
+            self._profile
+        )
 
     @property
     def running(self) -> bool:
@@ -47,6 +72,7 @@ class Session:
         """
         Prepare the session.
         """
+
         self._running = True
 
     def run(self) -> None:
@@ -61,11 +87,24 @@ class Session:
         print("====================================================")
         print()
 
+        welcome = (
+            f"{self._profile.greeting}, "
+            f"{self._profile.display_name}."
+        )
+
+        print(welcome)
+        print()
+
+        self._voice.speak(welcome)
+
         while self._running:
 
             try:
 
-                user_input = input("> ").strip()
+                #
+                # Read from the active input source.
+                #
+                user_input = self._input.read()
 
             except (EOFError, KeyboardInterrupt):
 
@@ -81,11 +120,17 @@ class Session:
             }:
                 break
 
-            response = self._cognition.process(user_input)
+            response = self._cognition.process(
+                user_input
+            )
 
             print()
             print(response.message)
             print()
+
+            self._voice.speak(
+                response.message
+            )
 
         self.shutdown()
 
@@ -98,3 +143,7 @@ class Session:
 
         print()
         print("Goodbye.")
+
+        self._voice.speak(
+            "Goodbye."
+        )

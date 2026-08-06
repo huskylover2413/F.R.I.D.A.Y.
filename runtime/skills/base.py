@@ -7,15 +7,13 @@ File:
     runtime/skills/base.py
 
 Purpose:
-    Base class for all FRIDAY Skills.
+    Base class for every FRIDAY Skill.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
-Version:
-    0.6.0
-Release:
-    Skills
+Foundation Release:
+    8.1
 ==========================================================
 """
 
@@ -23,6 +21,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from .context import SkillContext
 from .models import SkillResult
 
 
@@ -35,12 +34,15 @@ class Skill(ABC):
     @abstractmethod
     def name(self) -> str:
         """
-        Human readable skill name.
+        Human-readable skill name.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def execute(self) -> SkillResult:
+    def execute(
+        self,
+        context: SkillContext,
+    ) -> SkillResult:
         """
         Execute the skill.
         """

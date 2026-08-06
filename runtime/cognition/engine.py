@@ -7,15 +7,13 @@ File:
     runtime/cognition/engine.py
 
 Purpose:
-    Coordinates FRIDAY reasoning.
+    Coordinates the complete FRIDAY reasoning pipeline.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
-Version:
-    0.7.0
-Release:
-    Cognition
+Foundation Release:
+    8.1
 ==========================================================
 """
 
@@ -23,7 +21,8 @@ from __future__ import annotations
 
 from runtime.decision import DecisionEngine
 from runtime.intent import IntentEngine
-from runtime.skills import SkillRegistry
+from runtime.profile import ProfileManager
+from runtime.skills import SkillContext, SkillRegistry
 from runtime.skills.system import (
     DateSkill,
     GreetingSkill,
@@ -41,9 +40,16 @@ class CognitionEngine:
     def __init__(self) -> None:
 
         self._intent = IntentEngine()
-
         self._decision = DecisionEngine()
 
+        #
+        # Load the active user profile.
+        #
+        self._profile = ProfileManager().load()
+
+        #
+        # Register available skills.
+        #
         self._skills = SkillRegistry()
 
         self._skills.register(GreetingSkill())
@@ -65,7 +71,7 @@ class CognitionEngine:
         if decision.skill_name is None:
 
             return Response(
-                "I'm not sure how to help with that yet.",
+                message="I'm not sure how to help with that yet.",
                 success=False,
             )
 
@@ -73,7 +79,11 @@ class CognitionEngine:
             decision.skill_name
         )
 
-        result = skill.execute()
+        context = SkillContext(
+            profile=self._profile,
+        )
+
+        result = skill.execute(context)
 
         return Response(
             message=result.message,
