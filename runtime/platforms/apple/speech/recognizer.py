@@ -11,6 +11,9 @@ Purpose:
 
 Author:
     Shae Simpson & OpenAI ChatGPT
+
+Version:
+    11.2
 ==========================================================
 """
 
@@ -25,21 +28,29 @@ import Speech
 
 class AppleRecognizer:
     """
-    Performs one speech recognition request.
+    Apple Speech recognizer.
+
+    Keeps AVAudioEngine alive between recognition
+    requests and returns after a short period of
+    silence instead of waiting for Apple's final
+    result.
     """
 
-    def recognize(self, timeout: float = 10.0) -> str:
+    def __init__(self) -> None:
 
-        spoken_text = ""
+        self._engine = AVFoundation.AVAudioEngine.alloc().init()
 
-        #
-        # Authorization
-        #
-        Speech.SFSpeechRecognizer.requestAuthorization_(None)
+        self._input_node = self._engine.inputNode()
 
-        #
-        # Audio Session
-        #
+        self._recognizer = Speech.SFSpeechRecognizer.alloc().init()
+
+        self._started = False
+
+    def _ensure_engine(self) -> None:
+
+        if self._started:
+            return
+
         session = AVFoundation.AVAudioSession.sharedInstance()
 
         session.setCategory_mode_options_error_(
@@ -55,10 +66,22 @@ class AppleRecognizer:
             None,
         )
 
-        #
-        # Speech Recognizer
-        #
-        recognizer = Speech.SFSpeechRecognizer.alloc().init()
+        self._engine.prepare()
+
+        self._engine.startAndReturnError_(None)
+
+        self._started = True
+
+    def recognize(
+        self,
+        timeout: float = 10.0,
+    ) -> str:
+
+        self._ensure_engine()
+
+        spoken = ""
+
+        last_update = datetime.now()
 
         request = (
             Speech.SFSpeechAudioBufferRecognitionRequest.alloc().init()
@@ -66,16 +89,11 @@ class AppleRecognizer:
 
         request.setShouldReportPartialResults_(True)
 
-        #
-        # Audio Engine
-        #
-        engine = AVFoundation.AVAudioEngine.alloc().init()
+        recording_format = (
+            self._input_node.outputFormatForBus_(0)
+        )
 
-        input_node = engine.inputNode()
-
-        recording_format = input_node.outputFormatForBus_(0)
-
-        input_node.installTapOnBus_bufferSize_format_block_(
+        self._input_node.installTapOnBus_bufferSize_format_block_(
             0,
             1024,
             recording_format,
@@ -83,50 +101,66 @@ class AppleRecognizer:
                 request.appendAudioPCMBuffer_(buffer),
         )
 
-        engine.prepare()
-        engine.startAndReturnError_(None)
-
-        finished = False
-
         def callback(result, error):
 
-            nonlocal spoken_text
-            nonlocal finished
+            nonlocal spoken
+            nonlocal last_update
 
             if error is not None:
-                finished = True
                 return
 
             if result is None:
                 return
 
-            spoken_text = (
+            spoken = (
                 result.bestTranscription()
                 .formattedString()
+                .strip()
             )
 
-            if result.isFinal():
-                finished = True
+            last_update = datetime.now()
 
-        task = recognizer.recognitionTaskWithRequest_resultHandler_(
+        task = self._recognizer.recognitionTaskWithRequest_resultHandler_(
             request,
             callback,
         )
 
-        end = datetime.now() + timedelta(seconds=timeout)
+        deadline = (
+            datetime.now()
+            + timedelta(seconds=timeout)
+        )
 
-        while not finished and datetime.now() < end:
+        silence = timedelta(milliseconds=700)
+
+        while datetime.now() < deadline:
 
             AppKit.NSRunLoop.currentRunLoop().runUntilDate_(
-                datetime.now() + timedelta(milliseconds=100)
+                datetime.now()
+                + timedelta(milliseconds=100)
             )
+
+            #
+            # Return after 700 ms of no speech updates.
+            #
+            if (
+                spoken
+                and datetime.now() - last_update > silence
+            ):
+                break
 
         request.endAudio()
 
         task.cancel()
 
-        input_node.removeTapOnBus_(0)
+        self._input_node.removeTapOnBus_(0)
 
-        engine.stop()
+        return spoken
 
-        return spoken_text.strip()
+    def shutdown(self) -> None:
+
+        if not self._started:
+            return
+
+        self._engine.stop()
+
+        self._started = False

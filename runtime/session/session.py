@@ -13,7 +13,7 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    11.0
+    11.1
 ==========================================================
 """
 
@@ -29,6 +29,9 @@ from runtime.voice import VoiceSynthesizer
 class Session:
     """
     Represents one interactive FRIDAY session.
+
+    A Session owns one conversation between
+    the user and FRIDAY.
     """
 
     def __init__(self) -> None:
@@ -77,7 +80,7 @@ class Session:
 
             try:
 
-                print("Listening...")
+                print("🎤 Listening...")
 
                 result = self._speech.listen()
 
@@ -85,13 +88,15 @@ class Session:
 
             except (KeyboardInterrupt, EOFError):
 
+                print()
                 break
 
             if not user_input:
                 continue
 
             print()
-            print(f"You: {user_input}")
+            print(f"✓ Heard: {user_input}")
+            print("🧠 Thinking...")
             print()
 
             if user_input.lower() in (
@@ -104,7 +109,7 @@ class Session:
                 user_input
             )
 
-            print(response.message)
+            print(f"🤖 {response.message}")
             print()
 
             self._voice.speak(
