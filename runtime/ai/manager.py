@@ -13,22 +13,22 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    15.2
+    16.0
 ==========================================================
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from .models import AIResponse
 from .ollama_provider import OllamaProvider
+from .streaming import StreamingCoordinator
 
 
 class AIManager:
     """
     Central AI controller.
-
-    Handles prompt construction and delegates
-    generation to the configured provider.
     """
 
     def __init__(self) -> None:
@@ -44,35 +44,54 @@ You are Michael's personal AI assistant.
 Rules:
 
 - Speak naturally.
-- Be concise.
-- Default to 1–3 sentences.
-- Only give long answers if asked.
-- Never mention being an AI language model.
-- If you do not know something, say so.
-- If a local skill already answered the question,
-  it should never reach you.
-- Prioritize helping over explaining.
-- Assume responses will be spoken aloud.
+- Keep answers short.
+- Default to one to three sentences.
+- Only elaborate when asked.
+- Never say you are a language model.
+- Assume every answer will be spoken aloud.
 """
 
-    @property
-    def provider_name(self) -> str:
+    def _build_prompt(
+        self,
+        prompt: str,
+    ) -> str:
 
-        return self._provider.name
+        return (
+            self._system_prompt.strip()
+            + "\n\nUser: "
+            + prompt
+            + "\n\nFRIDAY:"
+        )
 
     def generate(
         self,
         prompt: str,
     ) -> AIResponse:
 
-        full_prompt = (
-            self._system_prompt.strip()
-            + "\n\n"
-            + "User: "
-            + prompt
-            + "\n\nFRIDAY:"
+        return self._provider.generate(
+            self._build_prompt(
+                prompt
+            )
         )
 
-        return self._provider.generate(
-            full_prompt
+    def stream(
+        self,
+        prompt: str,
+        callback: Callable[[str], None],
+    ) -> None:
+
+        coordinator = StreamingCoordinator(
+            callback
         )
+
+        for chunk in self._provider.stream(
+            self._build_prompt(
+                prompt
+            )
+        ):
+
+            coordinator.push(
+                chunk
+            )
+
+        coordinator.finish()

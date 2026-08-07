@@ -13,31 +13,26 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    15.0
+    16.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 
 from .models import AIResponse
 
 
 class AIProvider(ABC):
     """
-    Base class for every AI provider.
-
-    FRIDAY communicates only through this interface.
-    Providers may be cloud based or local.
+    Base interface implemented by every AI provider.
     """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """
-        Human-readable provider name.
-        """
         raise NotImplementedError
 
     @abstractmethod
@@ -45,16 +40,16 @@ class AIProvider(ABC):
         self,
         prompt: str,
     ) -> AIResponse:
+        raise NotImplementedError
+
+    @abstractmethod
+    def stream(
+        self,
+        prompt: str,
+    ) -> Iterator[str]:
         """
-        Generate a response.
+        Stream text from the provider.
 
-        Parameters
-        ----------
-        prompt:
-            User request.
-
-        Returns
-        -------
-        AIResponse
+        Returns an iterator of text chunks.
         """
         raise NotImplementedError

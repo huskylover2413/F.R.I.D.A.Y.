@@ -7,17 +7,20 @@ File:
     runtime/ai/ollama_provider.py
 
 Purpose:
-    Ollama implementation of AIProvider.
+    Ollama implementation of AIProvider with
+    streaming support.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    15.1
+    16.0
 ==========================================================
 """
 
 from __future__ import annotations
+
+from collections.abc import Iterator
 
 import requests
 
@@ -26,6 +29,9 @@ from .provider import AIProvider
 
 
 class OllamaProvider(AIProvider):
+    """
+    Local Ollama provider.
+    """
 
     def __init__(
         self,
@@ -43,6 +49,9 @@ class OllamaProvider(AIProvider):
         self,
         prompt: str,
     ) -> AIResponse:
+        """
+        Traditional blocking response.
+        """
 
         response = requests.post(
             "http://127.0.0.1:11434/api/generate",
@@ -51,7 +60,7 @@ class OllamaProvider(AIProvider):
                 "prompt": prompt,
                 "stream": False,
             },
-            timeout=120,
+            timeout=300,
         )
 
         response.raise_for_status()
@@ -63,3 +72,59 @@ class OllamaProvider(AIProvider):
             provider=self.name,
             success=True,
         )
+
+    def stream(
+        self,
+        prompt: str,
+    ) -> Iterator[str]:
+        """
+        Stream text from Ollama.
+
+        Yields small chunks exactly as the
+        model generates them.
+        """
+
+        response = requests.post(
+            "http://127.0.0.1:11434/api/generate",
+            json={
+                "model": self._model,
+                "prompt": prompt,
+                "stream": True,
+            },
+            stream=True,
+            timeout=300,
+        )
+
+        response.raise_for_status()
+
+        for line in response.iter_lines():
+
+            if not line:
+                continue
+
+            data = line.decode("utf-8")
+
+            try:
+
+                import json
+
+                payload = json.loads(data)
+
+            except Exception:
+
+                continue
+
+            chunk = payload.get(
+                "response",
+                "",
+            )
+
+            if chunk:
+
+                yield chunk
+
+            if payload.get(
+                "done",
+                False,
+            ):
+                break
