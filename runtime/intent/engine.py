@@ -12,45 +12,166 @@ Purpose:
 Author:
     Shae Simpson & OpenAI ChatGPT
 
-Version:
-    0.5.0
-Release:
-    Intent
+Foundation Release:
+    13.7
 ==========================================================
 """
 
 from __future__ import annotations
+
+import re
 
 from .models import IntentResult, IntentType
 
 
 class IntentEngine:
     """
-    Simple rule-based Intent Engine.
+    Rule-based intent engine.
     """
 
-    def analyze(self, text: str) -> IntentResult:
-        """
-        Determine user intent.
-        """
+    def analyze(
+        self,
+        text: str,
+    ) -> IntentResult:
 
-        value = text.lower()
+        value = text.lower().strip()
 
-        if "hello" in value:
+        #
+        # Identity
+        #
+        if any(
+            phrase in value
+            for phrase in (
+                "who are you",
+                "what are you",
+                "identify yourself",
+                "tell me about yourself",
+            )
+        ):
+            return IntentResult(
+                IntentType.IDENTITY_REQUEST,
+                1.0,
+            )
+
+        #
+        # Help
+        #
+        if any(
+            phrase in value
+            for phrase in (
+                "help",
+                "what can you do",
+                "capabilities",
+                "commands",
+            )
+        ):
+            return IntentResult(
+                IntentType.HELP_REQUEST,
+                1.0,
+            )
+
+        #
+        # Greetings
+        #
+        if any(
+            phrase in value
+            for phrase in (
+                "hello",
+                "hi",
+                "hey",
+                "good morning",
+                "good afternoon",
+                "good evening",
+            )
+        ):
             return IntentResult(
                 IntentType.GREETING,
                 1.0,
             )
 
-        if "time" in value:
+        #
+        # Time
+        #
+        if any(
+            phrase in value
+            for phrase in (
+                "time",
+                "what time",
+                "current time",
+                "tell me the time",
+            )
+        ):
             return IntentResult(
                 IntentType.TIME_REQUEST,
                 1.0,
             )
 
-        if "date" in value:
+        #
+        # Date
+        #
+        if any(
+            phrase in value
+            for phrase in (
+                "date",
+                "today",
+                "what day",
+                "day is it",
+                "month",
+                "year",
+            )
+        ):
             return IntentResult(
                 IntentType.DATE_REQUEST,
+                1.0,
+            )
+
+        #
+        # Math
+        #
+        math_keywords = (
+            "calculate",
+            "compute",
+            "evaluate",
+            "plus",
+            "minus",
+            "times",
+            "multiplied",
+            "divided",
+            "over",
+            "square root",
+            "sqrt",
+            "factorial",
+            "power",
+            "squared",
+            "cubed",
+            "pi",
+            "sin",
+            "cos",
+            "tan",
+            "log",
+            "mean",
+            "median",
+            "gcd",
+            "lcm",
+            "comb",
+            "perm",
+            "hypot",
+        )
+
+        has_operator = bool(
+            re.search(r"[+\-*/%^()×÷]", value)
+        )
+
+        has_number = bool(
+            re.search(r"\d", value)
+        )
+
+        if (
+            any(keyword in value for keyword in math_keywords)
+            or (has_operator and has_number)
+        ):
+            return IntentResult(
+                IntentType.MATH_REQUEST,
                 1.0,
             )
 

@@ -13,7 +13,7 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    8.1
+    12.1
 ==========================================================
 """
 
@@ -28,7 +28,10 @@ from runtime.skills.models import SkillResult
 
 class DateSkill(Skill):
     """
-    Reports today's date.
+    Reports date-related information.
+
+    The specific response is chosen based on
+    the user's original request.
     """
 
     @property
@@ -43,8 +46,50 @@ class DateSkill(Skill):
         Execute the Date skill.
         """
 
-        today = datetime.now().strftime("%B %d, %Y")
+        now = datetime.now()
 
+        #
+        # Determine what the user asked.
+        #
+        request = ""
+
+        if hasattr(context, "request"):
+            request = str(context.request).lower()
+
+        #
+        # Day of week
+        #
+        if (
+            "what day" in request
+            or "day is it" in request
+            or request.strip() == "day"
+        ):
+            return SkillResult(
+                message=f"Today is {now.strftime('%A')}."
+            )
+
+        #
+        # Month
+        #
+        if "month" in request:
+            return SkillResult(
+                message=f"It is {now.strftime('%B')}."
+            )
+
+        #
+        # Year
+        #
+        if "year" in request:
+            return SkillResult(
+                message=f"It is {now.strftime('%Y')}."
+            )
+
+        #
+        # Full date
+        #
         return SkillResult(
-            message=f"Today is {today}."
+            message=(
+                f"Today is "
+                f"{now.strftime('%B %d, %Y')}."
+            )
         )

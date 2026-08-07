@@ -12,10 +12,8 @@ Purpose:
 Author:
     Shae Simpson & OpenAI ChatGPT
 
-Version:
-    0.6.1
-Release:
-    Skills Integration
+Foundation Release:
+    13.5
 ==========================================================
 """
 
@@ -46,6 +44,15 @@ class DecisionEngine:
 
             case IntentType.DATE_REQUEST:
                 skill = "Date"
+
+            case IntentType.HELP_REQUEST:
+                skill = "Help"
+
+            case IntentType.IDENTITY_REQUEST:
+                skill = "Identity"
+
+            case IntentType.MATH_REQUEST:
+                skill = "Math"
 
             case _:
                 return DecisionResult(

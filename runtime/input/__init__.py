@@ -1,11 +1,14 @@
 """
-FRIDAY Input subsystem.
+==========================================================
+F.R.I.D.A.Y.
+Input subsystem.
+==========================================================
 """
 
 from .keyboard import KeyboardInput
 from .microphone import MicrophoneInput
-from .service import InputService
 from .source import InputSource
+from .service import InputService
 
 __all__ = [
     "InputSource",

@@ -13,25 +13,22 @@ Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    11.1
+    14.1
 ==========================================================
 """
 
 from __future__ import annotations
 
 from runtime.cognition import CognitionEngine
-from runtime.platforms.apple.speech.provider import AppleSpeechProvider
+from runtime.input import MicrophoneInput
+from runtime.language import LanguageNormalizer
 from runtime.profile import ProfileManager
-from runtime.speech.recognizer import SpeechRecognizer
 from runtime.voice import VoiceSynthesizer
 
 
 class Session:
     """
-    Represents one interactive FRIDAY session.
-
-    A Session owns one conversation between
-    the user and FRIDAY.
+    Represents one interactive user session.
     """
 
     def __init__(self) -> None:
@@ -42,19 +39,29 @@ class Session:
 
         self._profile = ProfileManager().load()
 
-        self._speech = SpeechRecognizer(
-            AppleSpeechProvider()
-        )
+        #
+        # Active input source
+        #
+        self._input = MicrophoneInput()
 
+        #
+        # Voice output
+        #
         self._voice = VoiceSynthesizer(
             self._profile
         )
+
+        #
+        # Language normalization
+        #
+        self._normalizer = LanguageNormalizer()
 
     @property
     def running(self) -> bool:
         return self._running
 
     def initialize(self) -> None:
+
         self._running = True
 
     def run(self) -> None:
@@ -82,11 +89,9 @@ class Session:
 
                 print("🎤 Listening...")
 
-                result = self._speech.listen()
+                user_input = self._input.read()
 
-                user_input = result.text.strip()
-
-            except (KeyboardInterrupt, EOFError):
+            except (EOFError, KeyboardInterrupt):
 
                 print()
                 break
@@ -94,15 +99,19 @@ class Session:
             if not user_input:
                 continue
 
+            user_input = self._normalizer.normalize(
+                user_input
+            )
+
             print()
             print(f"✓ Heard: {user_input}")
             print("🧠 Thinking...")
             print()
 
-            if user_input.lower() in (
+            if user_input.lower() in {
                 "exit",
                 "quit",
-            ):
+            }:
                 break
 
             response = self._cognition.process(
@@ -121,6 +130,11 @@ class Session:
     def shutdown(self) -> None:
 
         self._running = False
+
+        try:
+            self._input.shutdown()
+        except Exception:
+            pass
 
         print()
         print("Goodbye.")

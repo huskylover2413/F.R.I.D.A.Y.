@@ -4,31 +4,32 @@ F.R.I.D.A.Y.
 Fully Responsive Intelligent Digital Assistant for You
 
 File:
-    runtime/skills/context.py
+    runtime/ai/models.py
 
 Purpose:
-    Context passed to skills.
+    AI response models.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    12.1
+    15.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 
-@dataclass(slots=True)
-class SkillContext:
+@dataclass(slots=True, frozen=True)
+class AIResponse:
     """
-    Context supplied to every skill.
+    Response returned by an AI provider.
     """
 
-    profile: Any
+    message: str
 
-    request: str = ""
+    provider: str
+
+    success: bool = True
