@@ -1,19 +1,10 @@
 """
 ==========================================================
 F.R.I.D.A.Y.
-Fully Responsive Intelligent Digital Assistant for You
 
-File:
-    runtime/brain/services.py
+Brain Services
 
-Purpose:
-    Registry of Brain service types.
-
-Author:
-    Shae Simpson & OpenAI ChatGPT
-
-Foundation Release:
-    18.2
+Foundation Release 22.1
 ==========================================================
 """
 
@@ -24,7 +15,7 @@ from enum import Enum, auto
 
 class BrainService(Enum):
     """
-    Services the Brain can delegate work to.
+    Types of work the Brain can delegate.
     """
 
     SKILLS = auto()
@@ -38,3 +29,5 @@ class BrainService(Enum):
     AUTOMATION = auto()
 
     SYSTEM = auto()
+
+    VISION = auto()

@@ -16,6 +16,9 @@ from datetime import datetime
 
 @dataclass(slots=True)
 class Memory:
+    """
+    A single long-term memory.
+    """
 
     category: str
 

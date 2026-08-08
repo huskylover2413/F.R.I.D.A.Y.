@@ -1,12 +1,11 @@
 """
-==========================================================
-F.R.I.D.A.Y.
-Fully Responsive Intelligent Digital Assistant for You
-
-Runtime Session Package
-==========================================================
+FRIDAY Session.
 """
 
-from .session import Session
+from .manager import SessionManager
+from .models import SessionState
 
-__all__ = ["Session"]
+__all__ = [
+    "SessionManager",
+    "SessionState",
+]

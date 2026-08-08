@@ -2,98 +2,37 @@
 ==========================================================
 F.R.I.D.A.Y.
 
-Service Container
+Runtime Service Container
 
-Foundation Release 26.0
+Foundation Release 28.0
 ==========================================================
 """
 
 from __future__ import annotations
 
-from runtime.ai.manager import AIManager
+from runtime.ai import AIManager
+from runtime.goals import GoalManager
+from runtime.memory import MemoryManager
 from runtime.planner import Planner
-from runtime.executor import TaskExecutor
-from runtime.profile import ProfileManager
-from runtime.skills import (
-    SkillRegistry,
-    VisionSkill,
-)
-from runtime.skills.system import (
-    DateSkill,
-    GreetingSkill,
-    HelpSkill,
-    IdentitySkill,
-    MathSkill,
-    TimeSkill,
-)
+from runtime.session import SessionManager
+from runtime.vision.service import VisionService
 
 
 class ServiceContainer:
     """
-    Owns every long-lived service used by FRIDAY.
+    Owns the application's shared runtime services.
     """
 
     def __init__(self) -> None:
 
-        #
-        # User Profile
-        #
+        self.memory = MemoryManager()
 
-        self.profile = (
-            ProfileManager()
-            .load()
-        )
+        self.goals = GoalManager()
 
-        #
-        # AI
-        #
+        self.session = SessionManager()
+
+        self.vision = VisionService()
 
         self.ai = AIManager()
 
-        #
-        # Planner
-        #
-
         self.planner = Planner()
-
-        #
-        # Skills
-        #
-
-        self.skills = SkillRegistry()
-
-        self.skills.register(
-            GreetingSkill()
-        )
-
-        self.skills.register(
-            TimeSkill()
-        )
-
-        self.skills.register(
-            DateSkill()
-        )
-
-        self.skills.register(
-            HelpSkill()
-        )
-
-        self.skills.register(
-            IdentitySkill()
-        )
-
-        self.skills.register(
-            MathSkill()
-        )
-
-        self.skills.register(
-            VisionSkill()
-        )
-
-        #
-        # Executor
-        #
-
-        self.executor = TaskExecutor(
-            self.skills
-        )

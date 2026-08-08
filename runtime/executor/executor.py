@@ -2,69 +2,47 @@
 ==========================================================
 F.R.I.D.A.Y.
 
-Task Executor
+Action Executor
 
-Foundation Release 25.1
+Foundation Release 32.0
 ==========================================================
 """
 
 from __future__ import annotations
 
-from runtime.profile import UserProfile
-from runtime.skills import (
-    SkillContext,
-    SkillRegistry,
-)
-
-from .models import ExecutionResult
+from runtime.brain.action import Action
+from runtime.registry.action_registry import ActionRegistry
 
 
-class TaskExecutor:
+class ActionExecutor:
+    """
+    Executes Actions using the Action Registry.
+    """
 
     def __init__(
         self,
-        registry: SkillRegistry,
+        registry: ActionRegistry,
     ) -> None:
 
         self._registry = registry
 
     def execute(
         self,
-        plan,
-        profile: UserProfile,
-        request: str,
-    ) -> ExecutionResult:
+        action: Action,
+    ) -> None:
 
-        final_message = ""
+        try:
 
-        for task in plan.tasks:
-
-            skill = self._registry.get(
-                task.name
+            result = self._registry.execute(
+                action
             )
 
-            if skill is None:
-                continue
-
-            context = SkillContext(
-                profile=profile,
-                request=request,
+            action.complete(
+                result
             )
 
-            result = skill.execute(
-                context
+        except Exception as exc:
+
+            action.fail(
+                str(exc)
             )
-
-            if not result.success:
-
-                return ExecutionResult(
-                    success=False,
-                    message=result.message,
-                )
-
-            final_message = result.message
-
-        return ExecutionResult(
-            success=True,
-            message=final_message,
-        )

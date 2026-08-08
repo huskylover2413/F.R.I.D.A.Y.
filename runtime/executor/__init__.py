@@ -1,17 +1,9 @@
 """
-==========================================================
-F.R.I.D.A.Y.
-
-Task Executor
-
-Foundation Release 25.1
-==========================================================
+FRIDAY Executor.
 """
 
-from .executor import TaskExecutor
-from .models import ExecutionResult
+from .executor import ActionExecutor
 
 __all__ = [
-    "TaskExecutor",
-    "ExecutionResult",
+    "ActionExecutor",
 ]

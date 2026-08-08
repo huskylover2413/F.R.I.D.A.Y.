@@ -1,11 +1,5 @@
 """
-==========================================================
-F.R.I.D.A.Y.
-
-Service Container
-
-Foundation Release 26.0
-==========================================================
+FRIDAY Runtime Services.
 """
 
 from .container import ServiceContainer
