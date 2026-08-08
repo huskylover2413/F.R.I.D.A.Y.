@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Plan Stage
 
-Foundation Release 30.0
+Foundation Release 37.0
 ==========================================================
 """
 
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from ..action import Action
 from ..context import BrainContext
+from ..services import BrainService
 
 
 class PlanStage:
@@ -54,7 +55,7 @@ class PlanStage:
 
                 Action(
 
-                    service="memory",
+                    service=BrainService.MEMORY,
 
                     operation="search",
 
@@ -94,7 +95,7 @@ class PlanStage:
 
                 Action(
 
-                    service="vision",
+                    service=BrainService.VISION,
 
                     operation="describe",
 
@@ -108,19 +109,25 @@ class PlanStage:
         # AI
         #
 
-        board.actions.append(
+        if board.metadata.get("needs_ai", True):
 
-            Action(
+            board.actions.append(
 
-                service="ai",
+                Action(
 
-                operation="respond",
+                    service=BrainService.AI,
 
-                priority=50,
+                    operation="respond",
+
+                    priority=50,
+
+                )
 
             )
 
-        )
+        #
+        # Highest priority first
+        #
 
         board.actions.sort(
 
@@ -132,6 +139,6 @@ class PlanStage:
 
         board.reasoning.append(
 
-            f"Created {len(board.actions)} actions."
+            f"Created {len(board.actions)} action(s)."
 
         )

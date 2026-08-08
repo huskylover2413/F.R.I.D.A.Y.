@@ -4,13 +4,15 @@ F.R.I.D.A.Y.
 
 Brain Action
 
-Foundation Release 30.0
+Foundation Release 33.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+
+from .services import BrainService
 
 
 @dataclass(slots=True)
@@ -19,7 +21,7 @@ class Action:
     A single executable action.
     """
 
-    service: str
+    service: BrainService
 
     operation: str
 
