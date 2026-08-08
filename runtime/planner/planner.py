@@ -4,57 +4,40 @@ F.R.I.D.A.Y.
 
 Planner
 
-Foundation Release 24.1
+Version 2.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from .models import Plan
+from .providers.ai import AIPlannerProvider
 
 
 class Planner:
     """
-    Builds an execution plan.
+    AI-powered planner.
     """
+
+    def __init__(self) -> None:
+
+        self._provider = AIPlannerProvider()
 
     def plan(
         self,
         request: str,
     ) -> Plan:
 
-        request = request.lower()
-
         plan = Plan()
 
-        #
-        # Vision
-        #
+        tasks = self._provider.plan(
+            request
+        )
 
-        if any(
-
-            phrase in request
-
-            for phrase in (
-
-                "what am i looking at",
-
-                "what's on my screen",
-
-                "describe my screen",
-
-                "look at my screen",
-
-                "read my screen",
-
-            )
-
-        ):
+        for task in tasks:
 
             plan.add(
-                "Vision"
+                task
             )
-
-            return plan
 
         return plan

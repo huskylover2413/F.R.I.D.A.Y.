@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Memory Classifier
 
-Foundation Release 2.2
+Version 2.1
 ==========================================================
 """
 
@@ -15,8 +15,8 @@ from .models import MemoryDecision
 
 class MemoryClassifier:
     """
-    Determines whether information should
-    become long-term memory.
+    Determines whether something should become
+    long-term memory.
     """
 
     def classify(
@@ -24,7 +24,37 @@ class MemoryClassifier:
         text: str,
     ) -> MemoryDecision:
 
-        value = text.lower()
+        value = text.lower().strip()
+
+        #
+        # Explicit memory requests
+        #
+
+        if any(
+
+            phrase in value
+
+            for phrase in (
+
+                "remember",
+
+                "don't forget",
+
+                "do not forget",
+
+            )
+
+        ):
+
+            return MemoryDecision(
+
+                should_store=True,
+
+                category="memory",
+
+                confidence=1.0,
+
+            )
 
         #
         # Preferences
@@ -36,11 +66,15 @@ class MemoryClassifier:
 
             for phrase in (
 
-                "i prefer",
-
                 "my favorite",
 
-                "remember that",
+                "i prefer",
+
+                "i like",
+
+                "i love",
+
+                "i hate",
 
                 "always",
 
@@ -51,13 +85,17 @@ class MemoryClassifier:
         ):
 
             return MemoryDecision(
+
                 should_store=True,
+
                 category="preference",
+
                 confidence=0.95,
+
             )
 
         #
-        # Personal facts
+        # Stable personal facts
         #
 
         if any(
@@ -72,22 +110,28 @@ class MemoryClassifier:
 
                 "i attend",
 
-                "i work",
+                "i work at",
 
-                "i live",
+                "i live in",
+
+                "my major is",
 
             )
 
         ):
 
             return MemoryDecision(
+
                 should_store=True,
+
                 category="profile",
+
                 confidence=0.90,
+
             )
 
         #
-        # Projects
+        # Active projects
         #
 
         if any(
@@ -96,9 +140,13 @@ class MemoryClassifier:
 
             for phrase in (
 
-                "project",
+                "i'm building",
 
-                "building",
+                "i am building",
+
+                "my project",
+
+                "working on",
 
                 "developing",
 
@@ -107,13 +155,25 @@ class MemoryClassifier:
         ):
 
             return MemoryDecision(
+
                 should_store=True,
+
                 category="project",
+
                 confidence=0.85,
+
             )
 
+        #
+        # Temporary conversation
+        #
+
         return MemoryDecision(
+
             should_store=False,
+
             category="",
+
             confidence=0.0,
+
         )
