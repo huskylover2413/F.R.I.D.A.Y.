@@ -7,13 +7,13 @@ File:
     runtime/skills/system/math_translator.py
 
 Purpose:
-    Converts natural language into mathematical expressions.
+    Converts spoken mathematics into expressions.
 
 Author:
     Shae Simpson & OpenAI ChatGPT
 
 Foundation Release:
-    13.10
+    17.2
 ==========================================================
 """
 
@@ -59,6 +59,7 @@ class MathTranslator:
         #
         # Unicode operators
         #
+
         expression = (
             expression
             .replace("×", "*")
@@ -69,7 +70,9 @@ class MathTranslator:
         #
         # Spoken numbers
         #
+
         for word, number in _NUMBER_WORDS.items():
+
             expression = re.sub(
                 rf"\b{word}\b",
                 number,
@@ -77,56 +80,70 @@ class MathTranslator:
             )
 
         #
-        # Remove filler words
+        # IMPORTANT:
+        # Replace LONG phrases BEFORE removing words.
         #
+
+        phrase_map = {
+
+            "square root of": "sqrt(",
+            "square root": "sqrt(",
+
+            "factorial of": "factorial(",
+            "factorial": "factorial(",
+
+            "pi squared": "(pi^2)",
+            "pi cubed": "(pi^3)",
+
+            "to the power of": "^",
+            "to the": "^",
+
+            "multiplied by": "*",
+            "divided by": "/",
+
+            "plus": "+",
+            "minus": "-",
+            "times": "*",
+            "over": "/",
+        }
+
+        for old, new in sorted(
+            phrase_map.items(),
+            key=lambda x: len(x[0]),
+            reverse=True,
+        ):
+
+            expression = expression.replace(
+                old,
+                new,
+            )
+
+        #
+        # Remove filler
+        #
+
         for word in (
+
             "what is",
             "calculate",
             "compute",
             "evaluate",
+            "please",
             "the",
             "a",
             "an",
+
         ):
-            expression = expression.replace(word, "")
+
+            expression = expression.replace(
+                word,
+                "",
+            )
 
         #
-        # Functions
+        # Remove extra whitespace
         #
-        expression = expression.replace(
-            "square root of",
-            "sqrt("
-        )
 
-        expression = expression.replace(
-            "factorial of",
-            "factorial("
-        )
-
-        #
-        # Operators
-        #
-        replacements = {
-            "multiplied by": "*",
-            "divided by": "/",
-            "times": "*",
-            "plus": "+",
-            "minus": "-",
-            "over": "/",
-            "pi squared": "pi^2",
-            "pi cubed": "pi^3",
-        }
-
-        for old, new in sorted(
-            replacements.items(),
-            key=lambda item: len(item[0]),
-            reverse=True,
-        ):
-            expression = expression.replace(old, new)
-
-        #
-        # Remove whitespace
-        #
         expression = re.sub(
             r"\s+",
             "",
@@ -134,23 +151,28 @@ class MathTranslator:
         )
 
         #
-        # Close one-argument function calls
+        # Automatically close
         #
+
         expression = re.sub(
-            r"sqrt\(([^)]+)$",
+            r"sqrt\(([^)]*)$",
             r"sqrt(\1)",
             expression,
         )
 
         expression = re.sub(
-            r"factorial\(([^)]+)$",
+            r"factorial\(([^)]*)$",
             r"factorial(\1)",
             expression,
         )
 
         #
-        # Remove question marks
+        # Clean punctuation
         #
-        expression = expression.replace("?", "")
+
+        expression = expression.replace(
+            "?",
+            "",
+        )
 
         return expression

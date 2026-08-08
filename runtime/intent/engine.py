@@ -1,19 +1,9 @@
 """
 ==========================================================
 F.R.I.D.A.Y.
-Fully Responsive Intelligent Digital Assistant for You
+Intent Engine
 
-File:
-    runtime/intent/engine.py
-
-Purpose:
-    Determines user intent from recognized speech.
-
-Author:
-    Shae Simpson & OpenAI ChatGPT
-
-Foundation Release:
-    13.7
+Foundation Release 17.1
 ==========================================================
 """
 
@@ -25,9 +15,6 @@ from .models import IntentResult, IntentType
 
 
 class IntentEngine:
-    """
-    Rule-based intent engine.
-    """
 
     def analyze(
         self,
@@ -95,7 +82,6 @@ class IntentEngine:
         if any(
             phrase in value
             for phrase in (
-                "time",
                 "what time",
                 "current time",
                 "tell me the time",
@@ -112,10 +98,10 @@ class IntentEngine:
         if any(
             phrase in value
             for phrase in (
-                "date",
-                "today",
+                "today's date",
                 "what day",
-                "day is it",
+                "what date",
+                "today",
                 "month",
                 "year",
             )
@@ -128,6 +114,7 @@ class IntentEngine:
         #
         # Math
         #
+
         math_keywords = (
             "calculate",
             "compute",
@@ -137,14 +124,12 @@ class IntentEngine:
             "times",
             "multiplied",
             "divided",
-            "over",
             "square root",
             "sqrt",
             "factorial",
             "power",
             "squared",
             "cubed",
-            "pi",
             "sin",
             "cos",
             "tan",
@@ -158,18 +143,48 @@ class IntentEngine:
             "hypot",
         )
 
-        has_operator = bool(
-            re.search(r"[+\-*/%^()×÷]", value)
-        )
+        #
+        # Whole-word matching
+        #
 
-        has_number = bool(
-            re.search(r"\d", value)
+        words = set(
+            re.findall(
+                r"[a-z]+",
+                value,
+            )
         )
 
         if (
-            any(keyword in value for keyword in math_keywords)
-            or (has_operator and has_number)
+            any(
+                keyword in value
+                if " " in keyword
+                else keyword in words
+                for keyword in math_keywords
+            )
+            or re.search(
+                r"\d+\s*[-+*/%^×÷]\s*\d+",
+                value,
+            )
         ):
+
+            return IntentResult(
+                IntentType.MATH_REQUEST,
+                1.0,
+            )
+
+        #
+        # Constants
+        #
+
+        if " pi " in f" {value} ":
+
+            return IntentResult(
+                IntentType.MATH_REQUEST,
+                1.0,
+            )
+
+        if value == "pi":
+
             return IntentResult(
                 IntentType.MATH_REQUEST,
                 1.0,

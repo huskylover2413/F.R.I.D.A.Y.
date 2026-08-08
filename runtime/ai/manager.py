@@ -1,66 +1,29 @@
 """
 ==========================================================
 F.R.I.D.A.Y.
-Fully Responsive Intelligent Digital Assistant for You
+AI Manager
 
-File:
-    runtime/ai/manager.py
-
-Purpose:
-    Central manager for all AI interactions.
-
-Author:
-    Shae Simpson & OpenAI ChatGPT
-
-Foundation Release:
-    16.0
+Foundation Release 17.0
 ==========================================================
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from .models import AIResponse
 from .ollama_provider import OllamaProvider
-from .streaming import StreamingCoordinator
+from .router import AIRouter
 
 
 class AIManager:
-    """
-    Central AI controller.
-    """
 
     def __init__(self) -> None:
 
-        self._provider = OllamaProvider()
+        self._router = AIRouter()
 
-        self._system_prompt = """
-You are F.R.I.D.A.Y.
-(Fully Responsive Intelligent Digital Assistant for You.)
-
-You are Michael's personal AI assistant.
-
-Rules:
-
-- Speak naturally.
-- Keep answers short.
-- Default to one to three sentences.
-- Only elaborate when asked.
-- Never say you are a language model.
-- Assume every answer will be spoken aloud.
-"""
-
-    def _build_prompt(
-        self,
-        prompt: str,
-    ) -> str:
-
-        return (
-            self._system_prompt.strip()
-            + "\n\nUser: "
-            + prompt
-            + "\n\nFRIDAY:"
+        self._system_prompt = (
+            "You are FRIDAY. "
+            "Answer naturally. "
+            "Be concise unless asked for more."
         )
 
     def generate(
@@ -68,30 +31,21 @@ Rules:
         prompt: str,
     ) -> AIResponse:
 
-        return self._provider.generate(
-            self._build_prompt(
-                prompt
-            )
+        model = self._router.choose_model(
+            prompt
         )
 
-    def stream(
-        self,
-        prompt: str,
-        callback: Callable[[str], None],
-    ) -> None:
-
-        coordinator = StreamingCoordinator(
-            callback
+        provider = OllamaProvider(
+            model=model
         )
 
-        for chunk in self._provider.stream(
-            self._build_prompt(
-                prompt
-            )
-        ):
+        print()
+        print(f"AI Model : {model}")
+        print()
 
-            coordinator.push(
-                chunk
-            )
-
-        coordinator.finish()
+        return provider.generate(
+            self._system_prompt
+            + "\n\nUser: "
+            + prompt
+            + "\nFRIDAY:"
+        )

@@ -7,71 +7,82 @@ File:
     runtime/cognition/engine.py
 
 Purpose:
-    Coordinates the complete FRIDAY reasoning pipeline.
-
-Author:
-    Shae Simpson & OpenAI ChatGPT
+    Coordinates FRIDAY's reasoning pipeline.
 
 Foundation Release:
-    15.2
+    26.2
 ==========================================================
 """
 
 from __future__ import annotations
 
-from runtime.ai.manager import AIManager
 from runtime.decision import DecisionEngine
 from runtime.intent import IntentEngine
 from runtime.profile import ProfileManager
-from runtime.skills import SkillContext, SkillRegistry
-from runtime.skills.system import (
-    DateSkill,
-    GreetingSkill,
-    HelpSkill,
-    IdentitySkill,
-    MathSkill,
-    TimeSkill,
-)
+from runtime.services import ServiceContainer
+from runtime.skills import SkillContext
 
 from .models import Response
 
 
 class CognitionEngine:
     """
-    Coordinates FRIDAY's reasoning pipeline.
+    FRIDAY Brain.
+
+    Responsibilities
+
+        • Understand requests
+        • Build execution plans
+        • Execute skills
+        • Fall back to AI
     """
 
     def __init__(self) -> None:
 
         self._intent = IntentEngine()
+
         self._decision = DecisionEngine()
 
+        self._services = ServiceContainer()
+
+        #
+        # Keep compatibility with existing code.
+        #
         self._profile = ProfileManager().load()
-
-        #
-        # AI Manager
-        #
-        self._ai = AIManager()
-
-        #
-        # Built-in Skills
-        #
-        self._skills = SkillRegistry()
-
-        self._skills.register(GreetingSkill())
-        self._skills.register(TimeSkill())
-        self._skills.register(DateSkill())
-        self._skills.register(HelpSkill())
-        self._skills.register(IdentitySkill())
-        self._skills.register(MathSkill())
 
     def process(
         self,
         text: str,
     ) -> Response:
-        """
-        Process a single user request.
-        """
+
+        #
+        # ===============================
+        # 1. Planner
+        # ===============================
+        #
+
+        plan = self._services.planner.plan(
+            text
+        )
+
+        if not plan.empty:
+
+            result = self._services.executor.execute(
+                plan=plan,
+                profile=self._profile,
+                request=text,
+            )
+
+            return Response(
+                message=result.message,
+                success=result.success,
+            )
+
+        #
+        # ===============================
+        # 2. Existing Intent System
+        # ===============================
+        #
 
         intent = self._intent.analyze(
             text
@@ -81,34 +92,39 @@ class CognitionEngine:
             intent
         )
 
-        #
-        # Unknown requests are handled by AI.
-        #
-        if decision.skill_name is None:
+        if decision.skill_name is not None:
 
-            ai_response = self._ai.generate(
-                text
+            skill = self._services.skills.get(
+                decision.skill_name
             )
 
-            return Response(
-                message=ai_response.message,
-                success=ai_response.success,
-            )
+            if skill is not None:
 
-        skill = self._skills.get(
-            decision.skill_name
-        )
+                context = SkillContext(
+                    profile=self._profile,
+                    request=text,
+                )
 
-        context = SkillContext(
-            profile=self._profile,
-            request=text,
-        )
+                result = skill.execute(
+                    context
+                )
 
-        result = skill.execute(
-            context
+                return Response(
+                    message=result.message,
+                    success=result.success,
+                )
+
+        #
+        # ===============================
+        # 3. AI Fallback
+        # ===============================
+        #
+
+        ai = self._services.ai.generate(
+            text
         )
 
         return Response(
-            message=result.message,
-            success=result.success,
+            message=ai.message,
+            success=ai.success,
         )
