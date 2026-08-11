@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Decision Stage
 
-Foundation Release 58.2
+Foundation Release 58.4
 ==========================================================
 """
 
@@ -44,7 +44,7 @@ class DecisionStage:
         "what do you do",
 
         #
-        # Apple Music
+        # Apple Music — awareness
         #
 
         "what's playing",
@@ -55,6 +55,21 @@ class DecisionStage:
         "who's playing",
         "who is singing",
         "who's singing",
+
+        #
+        # Apple Music — playlists
+        #
+
+        "create a playlist",
+        "make a playlist",
+        "create playlist",
+        "make playlist",
+        "add this song to my",
+        "add this song to the",
+        "add this to my",
+        "add this to the",
+        "add current song to my",
+        "add current song to the",
     }
 
     def run(

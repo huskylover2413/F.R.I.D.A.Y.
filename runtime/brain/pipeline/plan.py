@@ -199,6 +199,79 @@ class PlanStage:
         #
         # Basic music playback
         #
+        # --------------------------------------------------
+        # Create playlist
+        #
+        # "create a playlist called Road Trip"
+        # "make a playlist named Road Trip"
+        # --------------------------------------------------
+        #
+
+        elif self._is_add_current_to_playlist_request(request):
+
+            playlist = self._extract_add_current_playlist(
+                request
+            )
+
+            if playlist:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="add_current_to_playlist",
+                        priority=120,
+                        arguments={
+                            "playlist": playlist,
+                        },
+                    )
+                )
+
+                local_action = True
+
+        elif self._is_add_song_to_playlist_request(request):
+
+            song, playlist = self._extract_add_song_playlist(
+                request
+            )
+
+            if song and playlist:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="add_song_to_playlist",
+                        priority=120,
+                        arguments={
+                            "song": song,
+                            "playlist": playlist,
+                        },
+                    )
+                )
+
+                local_action = True
+
+        elif self._is_create_playlist_request(request):
+
+            playlist = self._extract_create_playlist(
+                request
+            )
+
+            if playlist:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="create_playlist",
+                        priority=120,
+                        arguments={
+                            "playlist": playlist,
+                        },
+                    )
+                )
+
+                local_action = True
+
+        #
 
         elif self._is_play_music_request(request):
 
@@ -724,6 +797,201 @@ class PlanStage:
     # ======================================================
     # APPLE MUSIC — BASIC PLAYBACK
     # ======================================================
+    #
+    # ======================================================
+    # APPLE MUSIC — CREATE PLAYLIST
+    # ======================================================
+    #
+
+    @staticmethod
+    def _is_add_current_to_playlist_request(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith(
+                "add this song to my "
+            )
+            or request.startswith(
+                "add this song to the "
+            )
+            or request.startswith(
+                "add this to my "
+            )
+            or request.startswith(
+                "add this to the "
+            )
+            or request.startswith(
+                "add current song to my "
+            )
+            or request.startswith(
+                "add current song to the "
+            )
+        )
+
+    @staticmethod
+    def _extract_add_current_playlist(
+        request: str,
+    ) -> str:
+
+        prefixes = (
+            "add this song to my ",
+            "add this song to the ",
+            "add this to my ",
+            "add this to the ",
+            "add current song to my ",
+            "add current song to the ",
+        )
+
+        for prefix in prefixes:
+
+            if request.startswith(prefix):
+
+                playlist = request[
+                    len(prefix):
+                ].strip()
+
+                if playlist.endswith(
+                    " playlist"
+                ):
+
+                    playlist = playlist[
+                        :-len(" playlist")
+                    ].strip()
+
+                return playlist
+
+        return ""
+
+    @staticmethod
+    def _is_add_song_to_playlist_request(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith("add ")
+            and (
+                " to my " in request
+                or " to the " in request
+            )
+            and not request.startswith(
+                "add this "
+            )
+            and not request.startswith(
+                "add current song "
+            )
+        )
+
+    @staticmethod
+    def _extract_add_song_playlist(
+        request: str,
+    ) -> tuple[str, str]:
+
+        marker = " to my "
+
+        if (
+            request.startswith("add ")
+            and marker in request
+        ):
+
+            song, playlist = request[
+                len("add "):
+            ].split(
+                marker,
+                1,
+            )
+
+        else:
+
+            marker = " to the "
+
+            if (
+                not request.startswith("add ")
+                or marker not in request
+            ):
+
+                return "", ""
+
+            song, playlist = request[
+                len("add "):
+            ].split(
+                marker,
+                1,
+            )
+
+        song = song.strip()
+        playlist = playlist.strip()
+
+        if playlist.endswith(
+            " playlist"
+        ):
+
+            playlist = playlist[
+                :-len(" playlist")
+            ].strip()
+
+        return song, playlist
+
+    @staticmethod
+    def _is_create_playlist_request(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith(
+                "create a playlist called "
+            )
+            or request.startswith(
+                "create a playlist named "
+            )
+            or request.startswith(
+                "make a playlist called "
+            )
+            or request.startswith(
+                "make a playlist named "
+            )
+            or request.startswith(
+                "create playlist "
+            )
+            or request.startswith(
+                "make playlist "
+            )
+        )
+
+    @staticmethod
+    def _extract_create_playlist(
+        request: str,
+    ) -> str:
+
+        prefixes = (
+            "create a playlist called ",
+            "create a playlist named ",
+            "make a playlist called ",
+            "make a playlist named ",
+            "create playlist ",
+            "make playlist ",
+        )
+
+        for prefix in prefixes:
+
+            if request.startswith(prefix):
+
+                playlist = request[
+                    len(prefix):
+                ].strip()
+
+                if playlist.endswith(
+                    " playlist"
+                ):
+
+                    playlist = playlist[
+                        :-len(" playlist")
+                    ].strip()
+
+                return playlist
+
+        return ""
+
     #
 
     @staticmethod
