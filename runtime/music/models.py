@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Apple Music Models
 
-Foundation Release 54.0
+Foundation Release 57.2
 ==========================================================
 """
 
@@ -31,6 +31,8 @@ class MusicAction(str, Enum):
 
     REPEAT_ONE = "repeat_one"
 
+    REPEAT_OFF = "repeat_off"
+
     PLAY_SONG = "play_song"
 
     PLAY_ARTIST = "play_artist"
@@ -53,6 +55,8 @@ class MusicRequest:
     """
 
     action: MusicAction
+
+    target: str = ""
 
     song: str = ""
 

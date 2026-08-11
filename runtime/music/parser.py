@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Apple Music Parser
 
-Foundation Release 57.0
+Foundation Release 57.3
 ==========================================================
 """
 
@@ -21,12 +21,6 @@ class MusicParser:
     The parser never executes Apple Music commands.
     It only determines what the user wants FRIDAY to do.
     """
-
-    #
-    # --------------------------------------------------
-    # Public parser
-    # --------------------------------------------------
-    #
 
     def parse(
         self,
@@ -49,7 +43,9 @@ class MusicParser:
             return None
 
         #
+        # --------------------------------------------------
         # Basic playback
+        # --------------------------------------------------
         #
 
         if text in {
@@ -79,7 +75,9 @@ class MusicParser:
             )
 
         #
+        # --------------------------------------------------
         # Next
+        # --------------------------------------------------
         #
 
         if text in {
@@ -98,7 +96,9 @@ class MusicParser:
             )
 
         #
+        # --------------------------------------------------
         # Previous
+        # --------------------------------------------------
         #
 
         if text in {
@@ -118,7 +118,9 @@ class MusicParser:
             )
 
         #
+        # --------------------------------------------------
         # Restart current song
+        # --------------------------------------------------
         #
 
         if text in {
@@ -141,7 +143,9 @@ class MusicParser:
             )
 
         #
+        # --------------------------------------------------
         # Repeat current song
+        # --------------------------------------------------
         #
 
         if text in {
@@ -163,7 +167,29 @@ class MusicParser:
             )
 
         #
-        # Play specific song
+        # --------------------------------------------------
+        # Stop repeat
+        # --------------------------------------------------
+        #
+
+        if text in {
+            "stop looping",
+            "stop the loop",
+            "turn repeat off",
+            "turn off repeat",
+            "repeat off",
+            "stop repeating",
+            "stop repeat",
+        }:
+
+            return MusicRequest(
+                action=MusicAction.REPEAT_OFF
+            )
+
+        #
+        # --------------------------------------------------
+        # Explicit song
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -188,7 +214,9 @@ class MusicParser:
                     )
 
         #
-        # Play artist
+        # --------------------------------------------------
+        # Explicit artist
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -213,7 +241,9 @@ class MusicParser:
                     )
 
         #
-        # Play album
+        # --------------------------------------------------
+        # Explicit album
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -237,7 +267,9 @@ class MusicParser:
                     )
 
         #
-        # Play playlist
+        # --------------------------------------------------
+        # Explicit playlist
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -262,7 +294,9 @@ class MusicParser:
                     )
 
         #
+        # --------------------------------------------------
         # Create playlist
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -290,7 +324,9 @@ class MusicParser:
                     )
 
         #
+        # --------------------------------------------------
         # Add current song to playlist
+        # --------------------------------------------------
         #
 
         prefixes = (
@@ -326,12 +362,9 @@ class MusicParser:
                     )
 
         #
+        # --------------------------------------------------
         # Add specific song to playlist
-        #
-        #
-        # Example:
-        #
-        # add Hollywood Sign to my Favorites
+        # --------------------------------------------------
         #
 
         marker = " to my "
@@ -401,10 +434,12 @@ class MusicParser:
                 )
 
         #
+        # --------------------------------------------------
         # Add song to queue
+        # --------------------------------------------------
         #
 
-        prefixes = (
+        queue_prefixes = (
             "add ",
             "queue ",
             "put ",
@@ -418,7 +453,7 @@ class MusicParser:
             " in the queue",
         )
 
-        for prefix in prefixes:
+        for prefix in queue_prefixes:
 
             if not text.startswith(prefix):
                 continue
@@ -440,15 +475,51 @@ class MusicParser:
                         )
 
         #
-        # Stop repeat
+        # --------------------------------------------------
+        # Natural "play ___"
         #
+        # Examples:
         #
-        # MusicAction does not currently contain
-        # REPEAT_OFF, so we intentionally do not
-        # manufacture an action here.
+        # play hollywood sign
+        # play ed sheeran
+        # play divide
         #
-        # We will add that cleanly to models.py
-        # when we expand the Music subsystem.
+        # The MusicController will determine whether
+        # the target is a song, artist, or album.
+        # --------------------------------------------------
+        #
+
+        if text.startswith("play "):
+
+            target = text[
+                len("play "):
+            ].strip()
+
+            endings = (
+                " from apple music",
+                " on apple music",
+                " in apple music",
+            )
+
+            for ending in endings:
+
+                if target.endswith(ending):
+
+                    target = target[
+                        : -len(ending)
+                    ].strip()
+
+            if target:
+
+                return MusicRequest(
+                    action=MusicAction.PLAY,
+                    target=target,
+                )
+
+        #
+        # --------------------------------------------------
+        # Not a music command
+        # --------------------------------------------------
         #
 
         return None
