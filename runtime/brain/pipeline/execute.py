@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Execute Stage
 
-Foundation Release 57.5
+Foundation Release 58.3
 ==========================================================
 """
 
@@ -309,6 +309,20 @@ class ExecuteStage:
             return self._music.execute(
                 MusicRequest(
                     action=MusicAction.REPEAT_OFF,
+                )
+            )
+
+        #
+        # --------------------------------------------------
+        # Now Playing
+        # --------------------------------------------------
+        #
+
+        if operation == "now_playing":
+
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.NOW_PLAYING,
                 )
             )
 

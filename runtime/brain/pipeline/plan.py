@@ -286,6 +286,24 @@ class PlanStage:
 
         #
         # --------------------------------------------------
+        # Apple Music — NOW PLAYING
+        # --------------------------------------------------
+        #
+
+        elif self._is_now_playing_request(request):
+
+            board.actions.append(
+                Action(
+                    service=BrainService.SYSTEM,
+                    operation="now_playing",
+                    priority=110,
+                )
+            )
+
+            local_action = True
+
+        #
+        # --------------------------------------------------
         # Time
         # --------------------------------------------------
         #
@@ -830,6 +848,32 @@ class PlanStage:
                 "stop repeat",
             )
         )
+
+    #
+    # ======================================================
+    # APPLE MUSIC — NOW PLAYING
+    # ======================================================
+    #
+
+    @staticmethod
+    def _is_now_playing_request(
+        request: str,
+    ) -> bool:
+
+        return request in {
+            "what's playing",
+            "what is playing",
+            "what's playing?",
+            "what is playing?",
+            "what song is playing",
+            "what song is playing?",
+            "what song is this",
+            "what song is this?",
+            "who is playing",
+            "who's playing",
+            "who is singing",
+            "who's singing",
+        }
 
     #
     # ======================================================

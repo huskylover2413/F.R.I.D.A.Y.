@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Apple Music Parser
 
-Foundation Release 57.3
+Foundation Release 58.3
 ==========================================================
 """
 
@@ -26,12 +26,6 @@ class MusicParser:
         self,
         request: str,
     ) -> MusicRequest | None:
-        """
-        Parse a natural-language music request.
-
-        Returns None when the request is not recognized
-        as an Apple Music command.
-        """
 
         text = (
             str(request)
@@ -41,6 +35,31 @@ class MusicParser:
 
         if not text:
             return None
+
+        #
+        # --------------------------------------------------
+        # Now Playing
+        # --------------------------------------------------
+        #
+
+        if text in {
+            "what's playing",
+            "what is playing",
+            "what's playing?",
+            "what is playing?",
+            "what song is playing",
+            "what song is playing?",
+            "what song is this",
+            "what song is this?",
+            "who is playing",
+            "who's playing",
+            "who is singing",
+            "who's singing",
+        }:
+
+            return MusicRequest(
+                action=MusicAction.NOW_PLAYING
+            )
 
         #
         # --------------------------------------------------
@@ -119,7 +138,7 @@ class MusicParser:
 
         #
         # --------------------------------------------------
-        # Restart current song
+        # Restart
         # --------------------------------------------------
         #
 
@@ -477,15 +496,6 @@ class MusicParser:
         #
         # --------------------------------------------------
         # Natural "play ___"
-        #
-        # Examples:
-        #
-        # play hollywood sign
-        # play ed sheeran
-        # play divide
-        #
-        # The MusicController will determine whether
-        # the target is a song, artist, or album.
         # --------------------------------------------------
         #
 

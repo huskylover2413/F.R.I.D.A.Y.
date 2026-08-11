@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Music Service
 
-Foundation Release 57.6
+Foundation Release 58.2
 ==========================================================
 """
 
@@ -90,6 +90,16 @@ class MusicService:
         if action == MusicAction.REPEAT_OFF:
 
             return self._controller.repeat_off()
+
+        #
+        # --------------------------------------------------
+        # Now Playing
+        # --------------------------------------------------
+        #
+
+        if action == MusicAction.NOW_PLAYING:
+
+            return self._controller.now_playing()
 
         #
         # --------------------------------------------------

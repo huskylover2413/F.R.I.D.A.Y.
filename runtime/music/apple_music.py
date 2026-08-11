@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Apple Music Controller
 
-Foundation Release 56.0
+Foundation Release 58.1
 ==========================================================
 """
 
@@ -70,110 +70,6 @@ class AppleMusicController:
     # --------------------------------------------------
     #
 
-    def play(self) -> str:
-
-        self._run(
-            'tell application "Music" to play'
-        )
-
-        return "Playing music."
-
-    def pause(self) -> str:
-
-        self._run(
-            'tell application "Music" to pause'
-        )
-
-        return "Music paused."
-
-    def next(self) -> str:
-
-        self._run(
-            'tell application "Music" to next track'
-        )
-
-        return "Skipping to the next song."
-
-    def previous(self) -> str:
-
-        #
-        # Force Music to move to the actual previous
-        # track rather than restarting the current one.
-        #
-
-        script = '''
-tell application "Music"
-    set player position to 0
-    delay 0.1
-    previous track
-end tell
-'''
-
-        self._run(script)
-
-        return "Going back to the previous song."
-
-    #
-    # --------------------------------------------------
-    # Restart current song
-    # --------------------------------------------------
-    #
-
-    def restart(self) -> str:
-
-        script = '''
-tell application "Music"
-    set player position to 0
-    play
-end tell
-'''
-
-        self._run(script)
-
-        return "Starting the song over."
-
-    #
-    # --------------------------------------------------
-    # Repeat current song
-    # --------------------------------------------------
-    #
-
-    def repeat_one(self) -> str:
-
-        script = '''
-tell application "Music"
-    set song repeat to one
-end tell
-'''
-
-        self._run(script)
-
-        return "I'll repeat this song."
-
-    #
-    # --------------------------------------------------
-    # Turn repeat off
-    # --------------------------------------------------
-    #
-
-    def repeat_off(self) -> str:
-
-        script = '''
-tell application "Music"
-    set song repeat to off
-end tell
-'''
-
-        self._run(script)
-
-        return "Song repeat is off."
-
-    #
-    # --------------------------------------------------
-    # Smart Play
-    # --------------------------------------------------
-    #
-
     def play(
         self,
         target: str | None = None,
@@ -196,10 +92,6 @@ tell application "Music"
 
     set searchText to "{safe_target}"
 
-    #
-    # First try an exact song title.
-    #
-
     set matchingTracks to every track whose name is searchText
 
     if (count of matchingTracks) > 0 then
@@ -209,10 +101,6 @@ tell application "Music"
         return "SONG"
 
     end if
-
-    #
-    # Next try an exact artist.
-    #
 
     set matchingTracks to every track whose artist is searchText
 
@@ -224,10 +112,6 @@ tell application "Music"
 
     end if
 
-    #
-    # Next try an exact album.
-    #
-
     set matchingTracks to every track whose album is searchText
 
     if (count of matchingTracks) > 0 then
@@ -237,10 +121,6 @@ tell application "Music"
         return "ALBUM"
 
     end if
-
-    #
-    # Nothing matched.
-    #
 
     error "Music item not found."
 
@@ -263,9 +143,144 @@ end tell
 
         return f"Playing {target}."
 
+    def pause(self) -> str:
+
+        self._run(
+            'tell application "Music" to pause'
+        )
+
+        return "Music paused."
+
+    def next(self) -> str:
+
+        self._run(
+            'tell application "Music" to next track'
+        )
+
+        return "Skipping to the next song."
+
+    def previous(self) -> str:
+
+        script = '''
+tell application "Music"
+
+    set player position to 0
+
+    delay 0.1
+
+    previous track
+
+end tell
+'''
+
+        self._run(script)
+
+        return "Going back to the previous song."
+
     #
     # --------------------------------------------------
-    # Play specific song
+    # Restart
+    # --------------------------------------------------
+    #
+
+    def restart(self) -> str:
+
+        script = '''
+tell application "Music"
+
+    set player position to 0
+
+    play
+
+end tell
+'''
+
+        self._run(script)
+
+        return "Starting the song over."
+
+    #
+    # --------------------------------------------------
+    # Repeat
+    # --------------------------------------------------
+    #
+
+    def repeat_one(self) -> str:
+
+        script = '''
+tell application "Music"
+
+    set song repeat to one
+
+end tell
+'''
+
+        self._run(script)
+
+        return "I'll repeat this song."
+
+    def repeat_off(self) -> str:
+
+        script = '''
+tell application "Music"
+
+    set song repeat to off
+
+end tell
+'''
+
+        self._run(script)
+
+        return "Song repeat is off."
+
+    #
+    # --------------------------------------------------
+    # Now Playing
+    # --------------------------------------------------
+    #
+
+    def now_playing(self) -> str:
+
+        script = '''
+tell application "Music"
+
+    if not (exists current track) then
+
+        return "NOTHING_PLAYING"
+
+    end if
+
+    set currentName to name of current track
+    set currentArtist to artist of current track
+
+    return currentName & "||| " & currentArtist
+
+end tell
+'''
+
+        result = self._run(script)
+
+        if result == "NOTHING_PLAYING":
+
+            return "Nothing is currently playing."
+
+        if "||| " in result:
+
+            song, artist = result.split(
+                "||| ",
+                1,
+            )
+
+            return (
+                f"Currently playing "
+                f"{song} by {artist}."
+            )
+
+        return f"Currently playing {result}."
+
+    #
+    # --------------------------------------------------
+    # Specific song
     # --------------------------------------------------
     #
 
@@ -284,7 +299,9 @@ tell application "Music"
     set matchingTracks to every track whose name is "{safe_song}"
 
     if (count of matchingTracks) is 0 then
+
         error "Song not found."
+
     end if
 
     play item 1 of matchingTracks
@@ -298,7 +315,7 @@ end tell
 
     #
     # --------------------------------------------------
-    # Play artist
+    # Artist
     # --------------------------------------------------
     #
 
@@ -317,7 +334,9 @@ tell application "Music"
     set matchingTracks to every track whose artist is "{safe_artist}"
 
     if (count of matchingTracks) is 0 then
+
         error "Artist not found."
+
     end if
 
     play item 1 of matchingTracks
@@ -331,7 +350,7 @@ end tell
 
     #
     # --------------------------------------------------
-    # Play album
+    # Album
     # --------------------------------------------------
     #
 
@@ -350,7 +369,9 @@ tell application "Music"
     set matchingTracks to every track whose album is "{safe_album}"
 
     if (count of matchingTracks) is 0 then
+
         error "Album not found."
+
     end if
 
     play item 1 of matchingTracks
@@ -364,7 +385,7 @@ end tell
 
     #
     # --------------------------------------------------
-    # Play playlist
+    # Playlist
     # --------------------------------------------------
     #
 
@@ -484,7 +505,9 @@ tell application "Music"
     set matchingTracks to every track whose name is "{safe_song}"
 
     if (count of matchingTracks) is 0 then
+
         error "Song not found."
+
     end if
 
     set targetPlaylist to some user playlist whose name is "{safe_playlist}"
@@ -522,7 +545,9 @@ tell application "Music"
     set matchingTracks to every track whose name is "{safe_song}"
 
     if (count of matchingTracks) is 0 then
+
         error "Song not found."
+
     end if
 
     play item 1 of matchingTracks
