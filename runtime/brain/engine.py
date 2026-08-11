@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Brain Engine
 
-Foundation Release 42.0
+Foundation Release 55.0
 ==========================================================
 """
 
@@ -28,35 +28,71 @@ class BrainEngine:
     def ask(
         self,
         request: str,
+        **kwargs,
     ) -> AIResponse:
 
+        #
+        # Create Brain context.
+        #
         context = BrainContext(
             request=request,
         )
 
+        #
+        # Preserve conversational information
+        # supplied by the Session layer.
+        #
+        context.blackboard.metadata.update(
+            {
+                key: value
+                for key, value in kwargs.items()
+                if value is not None
+            }
+        )
+
+        #
+        # Run the Brain.
+        #
         context = self._loop.run(
             context
         )
 
         #
-        # Find the AI response.
+        # Find the most recent successful action.
         #
-
         for action in reversed(
             context.blackboard.actions
         ):
 
+            result = action.result
+
+            #
+            # AI / Skill response
+            #
             if hasattr(
-                action.result,
+                result,
                 "message",
             ):
 
-                return action.result
+                return result
+
+            #
+            # System / Mac response
+            #
+            if isinstance(
+                result,
+                str,
+            ):
+
+                return AIResponse(
+                    message=result,
+                    provider="FRIDAY",
+                    success=True,
+                )
 
         #
         # Nothing generated.
         #
-
         return AIResponse(
 
             message="I'm not sure how to answer that.",

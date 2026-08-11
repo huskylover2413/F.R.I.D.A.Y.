@@ -4,13 +4,14 @@ F.R.I.D.A.Y.
 
 Brain Loop
 
-Foundation Release 38.0
+Foundation Release 48.0
 ==========================================================
 """
 
 from __future__ import annotations
 
 from .context import BrainContext
+from .pipeline import ContextStage
 from .pipeline import DecisionStage
 from .pipeline import ExecuteStage
 from .pipeline import GoalStage
@@ -28,6 +29,8 @@ class BrainLoop:
     def __init__(self) -> None:
 
         self._recall = RecallStage()
+
+        self._context = ContextStage()
 
         self._goals = GoalStage()
 
@@ -51,6 +54,13 @@ class BrainLoop:
         #
 
         self._recall.run(context)
+
+        #
+        # Resolve conversational follow-ups
+        # before deciding what FRIDAY should do.
+        #
+
+        self._context.run(context)
 
         self._goals.run(context)
 
