@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Execute Stage
 
-Foundation Release 56.3
+Foundation Release 57.5
 ==========================================================
 """
 
@@ -24,7 +24,11 @@ from runtime.skills.system import (
     TimeSkill,
 )
 from runtime.executor import ActionExecutor
-from runtime.music.apple_music import AppleMusicController
+from runtime.music import (
+    MusicAction,
+    MusicRequest,
+    MusicService,
+)
 
 from ..context import BrainContext
 from ..services import BrainService
@@ -52,10 +56,10 @@ class ExecuteStage:
         self._profile = ProfileManager().load()
 
         #
-        # Apple Music
+        # Music subsystem
         #
 
-        self._music = AppleMusicController()
+        self._music = MusicService()
 
         #
         # System skills
@@ -197,7 +201,7 @@ class ExecuteStage:
 
     #
     # --------------------------------------------------
-    # System / Apple Music
+    # System / Music
     # --------------------------------------------------
     #
 
@@ -206,85 +210,122 @@ class ExecuteStage:
         action,
     ):
 
+        operation = action.operation
+
+        arguments = action.arguments
+
         #
+        # --------------------------------------------------
         # Open Music
+        # --------------------------------------------------
         #
 
-        if action.operation == "open_music":
+        if operation == "open_music":
 
-            return self._music.open()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.OPEN,
+                )
+            )
 
         #
+        # --------------------------------------------------
         # Basic playback
-        #
-        # "play_music" means resume/play the current
-        # Music app playback.
-        #
-        # "play" means intelligently resolve the
-        # requested target.
+        # --------------------------------------------------
         #
 
-        if action.operation == "play_music":
+        if operation == "play_music":
 
-            return self._music.play()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY,
+                )
+            )
 
-        if action.operation == "play":
+        if operation == "play":
 
             target = str(
-                action.arguments.get(
+                arguments.get(
                     "target",
                     "",
                 )
             ).strip()
 
-            if not target:
-
-                return self._music.play()
-
-            return self._music.play(
-                target
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY,
+                    target=target,
+                )
             )
 
-        if action.operation == "pause_music":
+        if operation == "pause_music":
 
-            return self._music.pause()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PAUSE,
+                )
+            )
 
-        if action.operation == "next_song":
+        if operation == "next_song":
 
-            return self._music.next()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.NEXT,
+                )
+            )
 
-        if action.operation == "previous_song":
+        if operation == "previous_song":
 
-            return self._music.previous()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PREVIOUS,
+                )
+            )
 
         #
+        # --------------------------------------------------
         # Current song controls
+        # --------------------------------------------------
         #
 
-        if action.operation == "restart_song":
+        if operation == "restart_song":
 
-            return self._music.restart()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.RESTART,
+                )
+            )
 
-        if action.operation == "repeat_one":
+        if operation == "repeat_one":
 
-            return self._music.repeat_one()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.REPEAT_ONE,
+                )
+            )
 
-        if action.operation == "repeat_off":
+        if operation == "repeat_off":
 
-            return self._music.repeat_off()
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.REPEAT_OFF,
+                )
+            )
 
         #
+        # --------------------------------------------------
         # Specific song
+        # --------------------------------------------------
         #
 
-        if action.operation == "play_song":
+        if operation == "play_song":
 
             song = str(
-                action.arguments.get(
+                arguments.get(
                     "song",
                     "",
                 )
-            )
+            ).strip()
 
             if not song:
 
@@ -292,22 +333,27 @@ class ExecuteStage:
                     "No song was specified."
                 )
 
-            return self._music.play_song(
-                song
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY_SONG,
+                    song=song,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Artist
+        # --------------------------------------------------
         #
 
-        if action.operation == "play_artist":
+        if operation == "play_artist":
 
             artist = str(
-                action.arguments.get(
+                arguments.get(
                     "artist",
                     "",
                 )
-            )
+            ).strip()
 
             if not artist:
 
@@ -315,22 +361,27 @@ class ExecuteStage:
                     "No artist was specified."
                 )
 
-            return self._music.play_artist(
-                artist
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY_ARTIST,
+                    artist=artist,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Album
+        # --------------------------------------------------
         #
 
-        if action.operation == "play_album":
+        if operation == "play_album":
 
             album = str(
-                action.arguments.get(
+                arguments.get(
                     "album",
                     "",
                 )
-            )
+            ).strip()
 
             if not album:
 
@@ -338,22 +389,27 @@ class ExecuteStage:
                     "No album was specified."
                 )
 
-            return self._music.play_album(
-                album
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY_ALBUM,
+                    album=album,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Playlist
+        # --------------------------------------------------
         #
 
-        if action.operation == "play_playlist":
+        if operation == "play_playlist":
 
             playlist = str(
-                action.arguments.get(
+                arguments.get(
                     "playlist",
                     "",
                 )
-            )
+            ).strip()
 
             if not playlist:
 
@@ -361,22 +417,27 @@ class ExecuteStage:
                     "No playlist was specified."
                 )
 
-            return self._music.play_playlist(
-                playlist
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.PLAY_PLAYLIST,
+                    playlist=playlist,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Create playlist
+        # --------------------------------------------------
         #
 
-        if action.operation == "create_playlist":
+        if operation == "create_playlist":
 
             playlist = str(
-                action.arguments.get(
+                arguments.get(
                     "playlist",
                     "",
                 )
-            )
+            ).strip()
 
             if not playlist:
 
@@ -384,22 +445,27 @@ class ExecuteStage:
                     "No playlist was specified."
                 )
 
-            return self._music.create_playlist(
-                playlist
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.CREATE_PLAYLIST,
+                    playlist=playlist,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Add current song to playlist
+        # --------------------------------------------------
         #
 
-        if action.operation == "add_current_to_playlist":
+        if operation == "add_current_to_playlist":
 
             playlist = str(
-                action.arguments.get(
+                arguments.get(
                     "playlist",
                     "",
                 )
-            )
+            ).strip()
 
             if not playlist:
 
@@ -407,29 +473,34 @@ class ExecuteStage:
                     "No playlist was specified."
                 )
 
-            return self._music.add_current_to_playlist(
-                playlist
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.ADD_TO_PLAYLIST,
+                    playlist=playlist,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Add specific song to playlist
+        # --------------------------------------------------
         #
 
-        if action.operation == "add_song_to_playlist":
+        if operation == "add_song_to_playlist":
 
             song = str(
-                action.arguments.get(
+                arguments.get(
                     "song",
                     "",
                 )
-            )
+            ).strip()
 
             playlist = str(
-                action.arguments.get(
+                arguments.get(
                     "playlist",
                     "",
                 )
-            )
+            ).strip()
 
             if not song:
 
@@ -443,23 +514,28 @@ class ExecuteStage:
                     "No playlist was specified."
                 )
 
-            return self._music.add_song_to_playlist(
-                song,
-                playlist,
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.ADD_TO_PLAYLIST,
+                    song=song,
+                    playlist=playlist,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Add song to queue
+        # --------------------------------------------------
         #
 
-        if action.operation == "add_song_to_queue":
+        if operation == "add_song_to_queue":
 
             song = str(
-                action.arguments.get(
+                arguments.get(
                     "song",
                     "",
                 )
-            )
+            ).strip()
 
             if not song:
 
@@ -467,17 +543,22 @@ class ExecuteStage:
                     "No song was specified."
                 )
 
-            return self._music.add_song_to_queue(
-                song
+            return self._music.execute(
+                MusicRequest(
+                    action=MusicAction.ADD_TO_QUEUE,
+                    song=song,
+                )
             )
 
         #
+        # --------------------------------------------------
         # Unknown system action
+        # --------------------------------------------------
         #
 
         raise KeyError(
             f"Unknown FRIDAY system action: "
-            f"{action.operation}"
+            f"{operation}"
         )
 
     #
@@ -559,10 +640,6 @@ class ExecuteStage:
             #
             # System actions already contain their
             # structured arguments from PlanStage.
-            #
-
-            #
-            # Execute
             #
 
             self._executor.execute(

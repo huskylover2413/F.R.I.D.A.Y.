@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Apple Music Models
 
-Foundation Release 57.2
+Foundation Release 57.5
 ==========================================================
 """
 
@@ -18,6 +18,8 @@ class MusicAction(str, Enum):
     """
     Approved Apple Music operations.
     """
+
+    OPEN = "open"
 
     PLAY = "play"
 
