@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Execute Stage
 
-Foundation Release 58.3
+Foundation Release 57.5
 ==========================================================
 """
 
@@ -214,6 +214,13 @@ class ExecuteStage:
 
         arguments = action.arguments
 
+        shuffle = bool(
+            arguments.get(
+                "shuffle",
+                False,
+            )
+        )
+
         #
         # --------------------------------------------------
         # Open Music
@@ -255,6 +262,7 @@ class ExecuteStage:
                 MusicRequest(
                     action=MusicAction.PLAY,
                     target=target,
+                    shuffle=shuffle,
                 )
             )
 
@@ -351,6 +359,7 @@ class ExecuteStage:
                 MusicRequest(
                     action=MusicAction.PLAY_SONG,
                     song=song,
+                    shuffle=shuffle,
                 )
             )
 
@@ -379,6 +388,7 @@ class ExecuteStage:
                 MusicRequest(
                     action=MusicAction.PLAY_ARTIST,
                     artist=artist,
+                    shuffle=shuffle,
                 )
             )
 
@@ -407,6 +417,7 @@ class ExecuteStage:
                 MusicRequest(
                     action=MusicAction.PLAY_ALBUM,
                     album=album,
+                    shuffle=shuffle,
                 )
             )
 
@@ -435,6 +446,7 @@ class ExecuteStage:
                 MusicRequest(
                     action=MusicAction.PLAY_PLAYLIST,
                     playlist=playlist,
+                    shuffle=shuffle,
                 )
             )
 

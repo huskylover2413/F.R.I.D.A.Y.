@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Decision Stage
 
-Foundation Release 58.4
+Foundation Release 58.5
 ==========================================================
 """
 
@@ -44,7 +44,15 @@ class DecisionStage:
         "what do you do",
 
         #
-        # Apple Music — awareness
+        # Apple Music — artist playback
+        #
+
+        "play artist",
+        "play music by",
+        "play songs by",
+
+        #
+        # Apple Music — now playing
         #
 
         "what's playing",
@@ -70,6 +78,18 @@ class DecisionStage:
         "add this to the",
         "add current song to my",
         "add current song to the",
+
+        #
+        # Apple Music — shuffle
+        #
+        # The PlanStage determines whether the target
+        # is a playlist, artist, album, or general target.
+        #
+
+        "shuffle",
+        "shuffled",
+        "in shuffle",
+        "on shuffle",
     }
 
     def run(

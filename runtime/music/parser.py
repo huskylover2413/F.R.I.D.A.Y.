@@ -36,6 +36,137 @@ class MusicParser:
         if not text:
             return None
 
+        shuffle = False
+
+        for phrase in (
+            " shuffled",
+            " in shuffle",
+            " on shuffle",
+        ):
+            if text.endswith(phrase):
+                shuffle = True
+                text = text[:-len(phrase)].strip()
+                break
+
+        if text.startswith("shuffle "):
+            shuffle = True
+            target = text[len("shuffle "):].strip()
+
+            #
+            # "shuffle music by Ed Sheeran"
+            # "shuffle songs by Ed Sheeran"
+            # "shuffle artist Ed Sheeran"
+            #
+
+            artist_prefixes = (
+                "music by ",
+                "songs by ",
+                "artist ",
+            )
+
+            for prefix in artist_prefixes:
+
+                if target.startswith(prefix):
+
+                    artist = target[
+                        len(prefix):
+                    ].strip()
+
+                    if artist:
+
+                        return MusicRequest(
+                            action=MusicAction.PLAY_ARTIST,
+                            artist=artist,
+                            shuffle=True,
+                        )
+
+            #
+            # "shuffle my Road Trip playlist"
+            # "shuffle the Road Trip playlist"
+            # "shuffle Road Trip playlist"
+            #
+            playlist_prefixes = (
+                "my ",
+                "the ",
+                "this ",
+            )
+
+            for prefix in playlist_prefixes:
+
+                if target.startswith(prefix):
+
+                    playlist = target[
+                        len(prefix):
+                    ].strip()
+
+                    if playlist.endswith(
+                        " playlist"
+                    ):
+
+                        playlist = playlist[
+                            :-len(" playlist")
+                        ].strip()
+
+                    if playlist:
+
+                        return MusicRequest(
+                            action=MusicAction.PLAY_PLAYLIST,
+                            playlist=playlist,
+                            shuffle=True,
+                        )
+
+            #
+            # "shuffle playlist Road Trip"
+            #
+            if target.startswith("playlist "):
+
+                playlist = target[
+                    len("playlist "):
+                ].strip()
+
+                if playlist:
+
+                    return MusicRequest(
+                        action=MusicAction.PLAY_PLAYLIST,
+                        playlist=playlist,
+                        shuffle=True,
+                    )
+
+            #
+            # "shuffle this playlist Road Trip"
+            #
+            if target.startswith("this playlist "):
+
+                playlist = target[
+                    len("this playlist "):
+                ].strip()
+
+                if playlist:
+
+                    return MusicRequest(
+                        action=MusicAction.PLAY_PLAYLIST,
+                        playlist=playlist,
+                        shuffle=True,
+                    )
+
+            #
+            # A bare target such as:
+            # "shuffle Ed Sheeran"
+            #
+            if target:
+
+                return MusicRequest(
+                    action=MusicAction.PLAY,
+                    target=target,
+                    shuffle=True,
+                )
+
+        if text == "shuffle":
+            return MusicRequest(
+                action=MusicAction.PLAY,
+                shuffle=True,
+            )
+
         #
         # --------------------------------------------------
         # Now Playing
@@ -78,7 +209,8 @@ class MusicParser:
         }:
 
             return MusicRequest(
-                action=MusicAction.PLAY
+                action=MusicAction.PLAY,
+                shuffle=shuffle,
             )
 
         if text in {
@@ -230,6 +362,7 @@ class MusicParser:
                     return MusicRequest(
                         action=MusicAction.PLAY_SONG,
                         song=song,
+                        shuffle=shuffle,
                     )
 
         #
@@ -257,6 +390,7 @@ class MusicParser:
                     return MusicRequest(
                         action=MusicAction.PLAY_ARTIST,
                         artist=artist,
+                        shuffle=shuffle,
                     )
 
         #
@@ -283,6 +417,7 @@ class MusicParser:
                     return MusicRequest(
                         action=MusicAction.PLAY_ALBUM,
                         album=album,
+                        shuffle=shuffle,
                     )
 
         #
@@ -295,6 +430,8 @@ class MusicParser:
             "play my playlist ",
             "play the playlist ",
             "play playlist ",
+            "play my ",
+            "play the ",
         )
 
         for prefix in prefixes:
@@ -310,6 +447,7 @@ class MusicParser:
                     return MusicRequest(
                         action=MusicAction.PLAY_PLAYLIST,
                         playlist=playlist,
+                        shuffle=shuffle,
                     )
 
         #
@@ -524,6 +662,7 @@ class MusicParser:
                 return MusicRequest(
                     action=MusicAction.PLAY,
                     target=target,
+                    shuffle=shuffle,
                 )
 
         #

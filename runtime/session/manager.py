@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Session Manager
 
-Foundation Release 27.0
+Foundation Release 47.0
 ==========================================================
 """
 
@@ -14,6 +14,9 @@ from .models import SessionState
 
 
 class SessionManager:
+    """
+    Maintains the current conversational session.
+    """
 
     def __init__(self) -> None:
 
@@ -27,11 +30,18 @@ class SessionManager:
     def begin_request(
         self,
         request: str,
-    ) -> None:
+    ) -> tuple[str, str]:
+
+        previous_request = self._state.last_request
+        previous_response = self._state.last_response
 
         self._state.last_request = request
-
         self._state.conversation_turns += 1
+
+        return (
+            previous_request,
+            previous_response,
+        )
 
     def finish_request(
         self,

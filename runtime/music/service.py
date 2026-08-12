@@ -34,6 +34,7 @@ class MusicService:
     ) -> str:
 
         action = request.action
+        shuffle = request.shuffle
 
         #
         # --------------------------------------------------
@@ -56,7 +57,8 @@ class MusicService:
             if request.target:
 
                 return self._controller.play(
-                    request.target
+                    request.target,
+                    shuffle=shuffle,
                 )
 
             return self._controller.play()
@@ -116,7 +118,8 @@ class MusicService:
                 )
 
             return self._controller.play_song(
-                request.song
+                request.song,
+                shuffle=shuffle,
             )
 
         #
@@ -134,7 +137,8 @@ class MusicService:
                 )
 
             return self._controller.play_artist(
-                request.artist
+                request.artist,
+                shuffle=shuffle,
             )
 
         #
@@ -152,7 +156,8 @@ class MusicService:
                 )
 
             return self._controller.play_album(
-                request.album
+                request.album,
+                shuffle=shuffle,
             )
 
         #
@@ -170,7 +175,8 @@ class MusicService:
                 )
 
             return self._controller.play_playlist(
-                request.playlist
+                request.playlist,
+                shuffle=shuffle,
             )
 
         #

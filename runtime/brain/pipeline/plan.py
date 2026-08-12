@@ -67,6 +67,72 @@ class PlanStage:
         # the target is a song, artist, or album.
         #
 
+        elif self._is_shuffle_playlist_request(request):
+
+            playlist = self._extract_shuffle_playlist(
+                request
+            )
+
+            if playlist:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="play_playlist",
+                        priority=120,
+                        arguments={
+                            "playlist": playlist,
+                            "shuffle": True,
+                        },
+                    )
+                )
+
+                local_action = True
+
+        elif self._is_shuffle_artist_request(request):
+
+            artist = self._extract_shuffle_artist(
+                request
+            )
+
+            if artist:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="play_artist",
+                        priority=120,
+                        arguments={
+                            "artist": artist,
+                            "shuffle": True,
+                        },
+                    )
+                )
+
+                local_action = True
+
+        elif self._is_shuffle_request(request):
+
+            target = self._extract_shuffle_target(
+                request
+            )
+
+            if target:
+
+                board.actions.append(
+                    Action(
+                        service=BrainService.SYSTEM,
+                        operation="play",
+                        priority=120,
+                        arguments={
+                            "target": target,
+                            "shuffle": True,
+                        },
+                    )
+                )
+
+                local_action = True
+
         elif self._is_play_request(request):
 
             target = self._extract_play_target(
@@ -82,6 +148,9 @@ class PlanStage:
                         priority=120,
                         arguments={
                             "target": target,
+                            "shuffle": self._has_shuffle_modifier(
+                                request
+                            ),
                         },
                     )
                 )
@@ -109,6 +178,9 @@ class PlanStage:
                         priority=120,
                         arguments={
                             "song": song,
+                            "shuffle": self._has_shuffle_modifier(
+                                request
+                            ),
                         },
                     )
                 )
@@ -136,6 +208,9 @@ class PlanStage:
                         priority=120,
                         arguments={
                             "artist": artist,
+                            "shuffle": self._has_shuffle_modifier(
+                                request
+                            ),
                         },
                     )
                 )
@@ -163,6 +238,9 @@ class PlanStage:
                         priority=120,
                         arguments={
                             "album": album,
+                            "shuffle": self._has_shuffle_modifier(
+                                request
+                            ),
                         },
                     )
                 )
@@ -190,6 +268,9 @@ class PlanStage:
                         priority=120,
                         arguments={
                             "playlist": playlist,
+                            "shuffle": self._has_shuffle_modifier(
+                                request
+                            ),
                         },
                     )
                 )
@@ -590,6 +671,170 @@ class PlanStage:
     #
 
     @staticmethod
+    def _is_shuffle_playlist_request(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith(
+                "shuffle my "
+            )
+            and request.endswith(
+                " playlist"
+            )
+            or request.startswith(
+                "shuffle the "
+            )
+            and request.endswith(
+                " playlist"
+            )
+            or request.startswith(
+                "shuffle playlist "
+            )
+            or request.startswith(
+                "shuffle this playlist "
+            )
+        )
+
+    @staticmethod
+    def _extract_shuffle_playlist(
+        request: str,
+    ) -> str:
+
+        prefixes = (
+            "shuffle my ",
+            "shuffle the ",
+            "shuffle playlist ",
+            "shuffle this playlist ",
+        )
+
+        for prefix in prefixes:
+
+            if request.startswith(prefix):
+
+                playlist = request[
+                    len(prefix):
+                ].strip()
+
+                if playlist.endswith(
+                    " playlist"
+                ):
+
+                    playlist = playlist[
+                        :-len(" playlist")
+                    ].strip()
+
+                return playlist
+
+        return ""
+
+    @staticmethod
+    def _is_shuffle_artist_request(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith(
+                "shuffle music by "
+            )
+            or request.startswith(
+                "shuffle songs by "
+            )
+            or request.startswith(
+                "shuffle artist "
+            )
+        )
+
+    @staticmethod
+    def _extract_shuffle_artist(
+        request: str,
+    ) -> str:
+
+        prefixes = (
+            "shuffle music by ",
+            "shuffle songs by ",
+            "shuffle artist ",
+        )
+
+        for prefix in prefixes:
+
+            if request.startswith(prefix):
+
+                return request[
+                    len(prefix):
+                ].strip()
+
+        return ""
+
+    @staticmethod
+    def _is_shuffle_request(
+        request: str,
+        ) -> bool:
+
+        #
+        # Playlist requests must be handled by
+        # _is_play_playlist_request so the playlist
+        # name is extracted correctly.
+        #
+        # "play my Road Trip playlist shuffled"
+        # must NOT become a generic "play" target.
+        #
+
+        if (
+            request.startswith("play ")
+            and " playlist" in request
+        ):
+
+            return False
+
+        return (
+            request.startswith("shuffle ")
+            or (
+                request.startswith("play ")
+                and (
+                    request.endswith(" shuffled")
+                    or " in shuffle" in request
+                    or " on shuffle" in request
+                )
+            )
+        )
+
+    @staticmethod
+    def _extract_shuffle_target(
+        request: str,
+    ) -> str:
+
+        if request.startswith("shuffle "):
+            return request[len("shuffle "):].strip()
+
+        for phrase in (
+            " shuffled",
+            " in shuffle",
+            " on shuffle",
+        ):
+            if request.endswith(phrase):
+                target = request[:-len(phrase)].strip()
+
+                if target.startswith("play "):
+                    target = target[len("play "):].strip()
+
+                return target
+
+        return ""
+
+    @staticmethod
+    def _has_shuffle_modifier(
+        request: str,
+    ) -> bool:
+
+        return (
+            request.startswith("shuffle ")
+            or request.endswith(" shuffled")
+            or " in shuffle" in request
+            or " on shuffle" in request
+        )
+
+    @staticmethod
     def _is_play_request(
         request: str,
     ) -> bool:
@@ -612,6 +857,14 @@ class PlanStage:
             "play the playlist ",
             "play my playlist ",
         )
+
+        # "play my Road Trip playlist shuffled" is a
+        # playlist request, not a generic play target.
+        if (
+            " playlist" in request
+            and request.startswith("play ")
+        ):
+            return False
 
         return not request.startswith(
             blocked
@@ -638,6 +891,18 @@ class PlanStage:
 
                 target = target[
                     : -len(ending)
+                ].strip()
+
+        for modifier in (
+            " shuffled",
+            " in shuffle",
+            " on shuffle",
+        ):
+
+            if target.endswith(modifier):
+
+                target = target[
+                    : -len(modifier)
                 ].strip()
 
         return target
@@ -692,10 +957,30 @@ class PlanStage:
         request: str,
     ) -> bool:
 
+        base = request
+
+        for modifier in (
+            " shuffled",
+            " in shuffle",
+            " on shuffle",
+        ):
+
+            if base.endswith(modifier):
+
+                base = base[
+                    : -len(modifier)
+                ].strip()
+
         return (
-            request.startswith("play artist ")
-            or request.startswith("play music by ")
-            or request.startswith("play songs by ")
+            base.startswith("play artist ")
+            or base.startswith("play music by ")
+            or base.startswith("play songs by ")
+            or (
+                base.startswith("play ")
+                and " playlist" not in base
+                and base != "play music"
+                and base != "play my music"
+            )
         )
 
     @staticmethod
@@ -713,9 +998,49 @@ class PlanStage:
 
             if request.startswith(prefix):
 
-                return request[
+                artist = request[
                     len(prefix):
                 ].strip()
+
+                for modifier in (
+                    " shuffled",
+                    " in shuffle",
+                    " on shuffle",
+                ):
+
+                    if artist.endswith(modifier):
+
+                        artist = artist[
+                            : -len(modifier)
+                        ].strip()
+
+                return artist
+
+        #
+        # Natural form:
+        # "play Ed Sheeran"
+        # "play Ed Sheeran shuffled"
+        #
+        if request.startswith("play "):
+
+            artist = request[
+                len("play "):
+            ].strip()
+
+            for modifier in (
+                " shuffled",
+                " in shuffle",
+                " on shuffle",
+            ):
+
+                if artist.endswith(modifier):
+
+                    artist = artist[
+                        : -len(modifier)
+                    ].strip()
+
+            if artist:
+                return artist
 
         return ""
 
@@ -770,6 +1095,10 @@ class PlanStage:
             request.startswith("play playlist ")
             or request.startswith("play the playlist ")
             or request.startswith("play my playlist ")
+            or (
+                request.startswith("play ")
+                and " playlist" in request
+            )
         )
 
     @staticmethod
@@ -781,15 +1110,34 @@ class PlanStage:
             "play my playlist ",
             "play the playlist ",
             "play playlist ",
+            "play my ",
+            "play the ",
         )
 
         for prefix in prefixes:
 
             if request.startswith(prefix):
 
-                return request[
+                playlist = request[
                     len(prefix):
                 ].strip()
+
+                for modifier in (
+                    " shuffled",
+                    " in shuffle",
+                    " on shuffle",
+                ):
+                    if playlist.endswith(modifier):
+                        playlist = playlist[
+                            :-len(modifier)
+                        ].strip()
+
+                if playlist.endswith(" playlist"):
+                    playlist = playlist[
+                        :-len(" playlist")
+                    ].strip()
+
+                return playlist
 
         return ""
 
