@@ -19,6 +19,7 @@ from runtime.profile import ProfileManager
 from runtime.voice import VoiceSynthesizer
 from runtime.wake import WakeDetector
 from runtime.wake import WakeResult
+from runtime.wake import WakePhraseParser
 
 from .models import SessionState
 
@@ -59,6 +60,8 @@ class Session:
         )
 
         self._wake = WakeDetector()
+        
+        self._wake_parser = WakePhraseParser()
 
         #
         # Apple Speech microphone

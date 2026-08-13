@@ -4,7 +4,7 @@ F.R.I.D.A.Y.
 
 Wake Phrase Parser
 
-Foundation Release 50.1
+Foundation Release 50.3
 ==========================================================
 """
 
@@ -21,7 +21,7 @@ class WakePhraseParser:
     separate responsibilities:
 
         Acoustic model -> detects the spoken name
-        Parser        -> understands how FRIDAY was addressed
+        Parser         -> understands how FRIDAY was addressed
     """
 
     WAKE_NAMES = {
@@ -76,23 +76,8 @@ class WakePhraseParser:
         if not normalized:
             return False
 
-        #
-        # Direct name:
-        #
-        # Friday
-        # Fri
-        #
-
         if normalized in self.WAKE_NAMES:
             return True
-
-        #
-        # Greeting + name:
-        #
-        # Hey Friday
-        # Good morning Friday
-        # Excuse me Fri
-        #
 
         for greeting in sorted(
             self.GREETINGS,
@@ -129,5 +114,61 @@ class WakePhraseParser:
             if name in words:
 
                 return name
+
+        return None
+
+    def extract_command(
+        self,
+        text: str,
+    ) -> str | None:
+
+        normalized = self.normalize(
+            text
+        )
+
+        if not normalized:
+            return None
+
+        words = normalized.split()
+
+        if not words:
+            return None
+
+        for name in self.WAKE_NAMES:
+
+            if words[0] == name:
+
+                command = " ".join(
+                    words[1:]
+                ).strip()
+
+                return command or None
+
+        for greeting in sorted(
+            self.GREETINGS,
+            key=len,
+            reverse=True,
+        ):
+
+            greeting_words = greeting.split()
+
+            count = len(greeting_words)
+
+            if words[:count] != greeting_words:
+                continue
+
+            remaining = words[count:]
+
+            if not remaining:
+                continue
+
+            if remaining[0] not in self.WAKE_NAMES:
+                continue
+
+            command = " ".join(
+                remaining[1:]
+            ).strip()
+
+            return command or None
 
         return None
